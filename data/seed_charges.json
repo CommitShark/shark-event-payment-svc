@@ -1,0 +1,33 @@
+[
+    {
+        "name": "Platform Ticket Sale Charge (NG)",
+        "charge_type": "ticket_purchase_ng",
+        "init_version": {
+            "version_number": 1,
+            "tiers": [
+                {
+                    "tier_name": "Small",
+                    "min_price": "1000",
+                    "max_price": "5000",
+                    "percentage_rate": "10",
+                    "max_charge": "475"
+                },
+                {
+                    "tier_name": "Medium",
+                    "min_price": "5000",
+                    "max_price": "20000",
+                    "percentage_rate": "5",
+                    "max_charge": "950"
+                },
+                {
+                    "tier_name": "Large",
+                    "min_price": "20000",
+                    "percentage_rate": "3",
+                    "max_charge": "5000"
+                }
+            ],
+            "created_by": "system",
+            "change_reason": "Seeded charge"
+        }
+    }
+]

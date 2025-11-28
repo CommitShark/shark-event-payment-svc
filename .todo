@@ -1,0 +1,1 @@
+Add distributed cache so that service can check there for reservation before resorting to calling ticket service via gRPC

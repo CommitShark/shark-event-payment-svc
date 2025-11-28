@@ -46,7 +46,7 @@ class SqlAlchemyChargeSettingVersion(Base):
         nullable=False,
     )
 
-    tiers: Mapped[list[Dict[str, Any]]] = mapped_column(
+    tiers: Mapped[list[str]] = mapped_column(
         JSON,
         nullable=False,
     )
@@ -87,7 +87,7 @@ class SqlAlchemyChargeSettingVersion(Base):
         return cls(
             version_id=data.version_id,
             version_number=data.version_number,
-            tiers=[tier.model_dump() for tier in data.tiers],
+            tiers=[tier.model_dump_json() for tier in data.tiers],
             effective_from=data.effective_from,
             effective_until=data.effective_until,
             created_at=data.created_at,
@@ -100,7 +100,7 @@ class SqlAlchemyChargeSettingVersion(Base):
         return ChargeSettingVersion(
             version_id=self.version_id,
             version_number=self.version_number,
-            tiers=[PriceRangeTier.model_validate(tier) for tier in self.tiers],
+            tiers=[PriceRangeTier.model_validate_json(tier) for tier in self.tiers],
             effective_from=self.effective_from,
             effective_until=self.effective_until,
             created_at=self.created_at,

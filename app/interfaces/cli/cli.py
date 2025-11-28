@@ -2,7 +2,7 @@ import click
 import logging
 
 
-from .commands import seed_categories
+from .commands import seed_charges
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,7 +16,7 @@ def cli():
     pass
 
 
-cli.add_command(seed_categories)
+cli.add_command(seed_charges)
 
 if __name__ == "__main__":
     cli()

@@ -1,4 +1,10 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+    model_validator,
+    field_serializer,
+)
 from typing import Optional
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -71,6 +77,12 @@ class PriceRangeTier(BaseModel):
         ):
             raise ValueError("min_charge cannot exceed max_charge")
         return self
+
+    @field_serializer("*", when_used="json")
+    def serialize_decimal(self, v):
+        if isinstance(v, Decimal):
+            return format(v, "f")  # keeps exact decimal, no scientific notation
+        return v
 
     def applies_to(self, amount: Decimal) -> bool:
         """Check if this tier applies to a given amount"""

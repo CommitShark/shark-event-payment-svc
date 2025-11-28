@@ -14,14 +14,14 @@
                 },
                 {
                     "tier_name": "Medium",
-                    "min_price": "5000",
+                    "min_price": "5000.01",
                     "max_price": "20000",
                     "percentage_rate": "5",
                     "max_charge": "950"
                 },
                 {
                     "tier_name": "Large",
-                    "min_price": "20000",
+                    "min_price": "20000.01",
                     "percentage_rate": "3",
                     "max_charge": "5000"
                 }

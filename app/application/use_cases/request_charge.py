@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from app.config import settings
 from app.domain.repositories import IChargeSettingRepository
+from app.domain.ports import ITicketService
 from app.domain.services import ChargeCalculationService
 from app.shared.errors import AppError, ErrorCodes
 from app.utils.signing import sign_payload
@@ -12,9 +13,11 @@ class RequestChargeUseCase:
         self,
         charge_calc_service: ChargeCalculationService,
         charge_repo: IChargeSettingRepository,
+        ticket_service: ITicketService,
     ) -> None:
         self._charge_calc_service = charge_calc_service
         self._charge_repo = charge_repo
+        self._ticket_service = ticket_service
 
     async def execute(
         self,
@@ -22,8 +25,7 @@ class RequestChargeUseCase:
         charge_type: str,
         ticket_type_id: str,
     ):
-        # TODO: Get amount via gRPC
-        amount = Decimal(0)
+        amount = await self._ticket_service.get_ticket_price(ticket_type_id)
 
         charge = await self._charge_repo.get_by_type(charge_type)
 

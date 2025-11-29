@@ -3,25 +3,28 @@
 import grpc
 import warnings
 
-import ticketing_pb2 as ticketing__pb2
+from app.infrastructure.grpc import ticketing_pb2 as ticketing__pb2
 
-GRPC_GENERATED_VERSION = '1.76.0'
+GRPC_GENERATED_VERSION = "1.76.0"
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
 try:
     from grpc._utilities import first_version_is_lower
-    _version_not_supported = first_version_is_lower(GRPC_VERSION, GRPC_GENERATED_VERSION)
+
+    _version_not_supported = first_version_is_lower(
+        GRPC_VERSION, GRPC_GENERATED_VERSION
+    )
 except ImportError:
     _version_not_supported = True
 
 if _version_not_supported:
     raise RuntimeError(
-        f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in ticketing_pb2_grpc.py depends on'
-        + f' grpcio>={GRPC_GENERATED_VERSION}.'
-        + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
-        + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
+        f"The grpc package installed is at version {GRPC_VERSION},"
+        + " but the generated code in ticketing_pb2_grpc.py depends on"
+        + f" grpcio>={GRPC_GENERATED_VERSION}."
+        + f" Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}"
+        + f" or downgrade your generated code using grpcio-tools<={GRPC_VERSION}."
     )
 
 
@@ -35,15 +38,17 @@ class GrpcTicketingServiceStub(object):
             channel: A grpc.Channel.
         """
         self.CheckReservation = channel.unary_unary(
-                '/ticketing.GrpcTicketingService/CheckReservation',
-                request_serializer=ticketing__pb2.CheckReservationRequest.SerializeToString,
-                response_deserializer=ticketing__pb2.CheckReservationResponse.FromString,
-                _registered_method=True)
+            "/ticketing.GrpcTicketingService/CheckReservation",
+            request_serializer=ticketing__pb2.CheckReservationRequest.SerializeToString,
+            response_deserializer=ticketing__pb2.CheckReservationResponse.FromString,
+            _registered_method=True,
+        )
         self.GetTicketPrice = channel.unary_unary(
-                '/ticketing.GrpcTicketingService/GetTicketPrice',
-                request_serializer=ticketing__pb2.GetTicketPriceRequest.SerializeToString,
-                response_deserializer=ticketing__pb2.GetTicketPriceResponse.FromString,
-                _registered_method=True)
+            "/ticketing.GrpcTicketingService/GetTicketPrice",
+            request_serializer=ticketing__pb2.GetTicketPriceRequest.SerializeToString,
+            response_deserializer=ticketing__pb2.GetTicketPriceResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class GrpcTicketingServiceServicer(object):
@@ -52,54 +57,59 @@ class GrpcTicketingServiceServicer(object):
     def CheckReservation(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def GetTicketPrice(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_GrpcTicketingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'CheckReservation': grpc.unary_unary_rpc_method_handler(
-                    servicer.CheckReservation,
-                    request_deserializer=ticketing__pb2.CheckReservationRequest.FromString,
-                    response_serializer=ticketing__pb2.CheckReservationResponse.SerializeToString,
-            ),
-            'GetTicketPrice': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetTicketPrice,
-                    request_deserializer=ticketing__pb2.GetTicketPriceRequest.FromString,
-                    response_serializer=ticketing__pb2.GetTicketPriceResponse.SerializeToString,
-            ),
+        "CheckReservation": grpc.unary_unary_rpc_method_handler(
+            servicer.CheckReservation,
+            request_deserializer=ticketing__pb2.CheckReservationRequest.FromString,
+            response_serializer=ticketing__pb2.CheckReservationResponse.SerializeToString,
+        ),
+        "GetTicketPrice": grpc.unary_unary_rpc_method_handler(
+            servicer.GetTicketPrice,
+            request_deserializer=ticketing__pb2.GetTicketPriceRequest.FromString,
+            response_serializer=ticketing__pb2.GetTicketPriceResponse.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ticketing.GrpcTicketingService', rpc_method_handlers)
+        "ticketing.GrpcTicketingService", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('ticketing.GrpcTicketingService', rpc_method_handlers)
+    server.add_registered_method_handlers(
+        "ticketing.GrpcTicketingService", rpc_method_handlers
+    )
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class GrpcTicketingService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def CheckReservation(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def CheckReservation(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/ticketing.GrpcTicketingService/CheckReservation',
+            "/ticketing.GrpcTicketingService/CheckReservation",
             ticketing__pb2.CheckReservationRequest.SerializeToString,
             ticketing__pb2.CheckReservationResponse.FromString,
             options,
@@ -110,23 +120,26 @@ class GrpcTicketingService(object):
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )
 
     @staticmethod
-    def GetTicketPrice(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
+    def GetTicketPrice(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/ticketing.GrpcTicketingService/GetTicketPrice',
+            "/ticketing.GrpcTicketingService/GetTicketPrice",
             ticketing__pb2.GetTicketPriceRequest.SerializeToString,
             ticketing__pb2.GetTicketPriceResponse.FromString,
             options,
@@ -137,4 +150,5 @@ class GrpcTicketingService(object):
             wait_for_ready,
             timeout,
             metadata,
-            _registered_method=True)
+            _registered_method=True,
+        )

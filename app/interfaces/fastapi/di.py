@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, Request
 from typing import Annotated, AsyncIterator
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,8 +11,10 @@ from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyChargeSettingRepository,
     SqlAlchemyChargeSettingVersionRepository,
 )
+from app.infrastructure.ports import GrpcTicketService
 from app.domain.services import ChargeCalculationService
 from app.application.use_cases import RequestChargeUseCase
+from app.infrastructure.grpc import ticketing_pb2_grpc
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
@@ -21,6 +23,21 @@ async def get_db() -> AsyncIterator[AsyncSession]:
 
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
+
+
+def get_grpc_ticket_stub(
+    request: Request,
+) -> ticketing_pb2_grpc.GrpcTicketingServiceStub:
+    stub = getattr(request.app.state, "ticket_stub", None)
+    if not stub:
+        raise RuntimeError("Ticket stub not initialized")
+    return stub
+
+
+GrpcTicketStubDep = Annotated[
+    ticketing_pb2_grpc.GrpcTicketingServiceStub,
+    Depends(get_grpc_ticket_stub),
+]
 
 
 def get_charge_setting_repository(
@@ -50,6 +67,7 @@ ChargeSettingVersionRepoDep = Annotated[
 def get_RequestChargeUseCase(
     charge_setting_repo: ChargeSettingRepoDep,
     version_repo: ChargeSettingVersionRepoDep,
+    ticket_stub: GrpcTicketStubDep,
 ):
     charge_calc_service = ChargeCalculationService(
         charge_setting_repo,
@@ -58,6 +76,7 @@ def get_RequestChargeUseCase(
     return RequestChargeUseCase(
         charge_calc_service,
         charge_setting_repo,
+        ticket_service=GrpcTicketService(ticket_stub),
     )
 
 

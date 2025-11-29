@@ -80,14 +80,14 @@ class ChargeCalculationService:
         charge = tier.calculate_charge(base_amount)
 
         return {
-            "base_amount": base_amount,
-            "charge_setting_id": charge_setting_id,
-            "version_id": version.version_id,
+            "base_amount": str(base_amount),
+            "charge_setting_id": str(charge_setting_id),
+            "version_id": str(version.version_id),
             "version_number": version.version_number,
             "tier_name": tier.tier_name,
             "tier_range": f"{tier.min_price} - {tier.max_price or 'unlimited'}",
-            "percentage_rate": tier.percentage_rate,
-            "calculated_charge": charge,
+            "percentage_rate": str(tier.percentage_rate),
+            "calculated_charge": str(charge),
             "min_cap_applied": tier.min_charge is not None
             and charge == tier.min_charge,
             "max_cap_applied": tier.max_charge is not None

@@ -1,13 +1,16 @@
 import logging
+import grpc  # type: ignore
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from app.config import grpc_config
 from app.config.http import HttpSettings
 from app.config.sqlalchemy import DatabaseSettings
 from app.shared.errors import AppError
 
+from app.infrastructure.grpc import ticketing_pb2_grpc
 from .endpoints.v1 import charges
 
 logger = logging.getLogger(__name__)
@@ -57,15 +60,17 @@ async def app_lifespan(app: FastAPI):
     # await kafka_event_bus.connect()
     # await kafka_event_bus.start_consuming()
 
-    # Start gRPC server in background
-    # app.state.grpc_task = asyncio.create_task(serve_grpc())
+    app.state.ticket_channel = grpc.aio.insecure_channel(grpc_config.ticket_svc_target)
+    app.state.ticket_stub = ticketing_pb2_grpc.GrpcTicketingServiceStub(
+        app.state.ticket_channel
+    )
 
     logger.info("Application startup complete")
 
     yield
 
     # 4. Cleanup
-    # app.state.grpc_task.cancel()
+    await app.state.ticket_channel.close()
     # await kafka_event_bus.disconnect()
     # await permify_client.client.aclose()
     logger.info("Application shutdown complete")

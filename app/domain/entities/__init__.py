@@ -7,6 +7,7 @@ from .transaction import (
     TransactionType,
     Transaction,
     ChargeData,
+    SettlementData,
 )
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "TransactionType",
     "Transaction",
     "ChargeData",
+    "SettlementData",
 ]

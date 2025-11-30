@@ -6,10 +6,12 @@ from app.infrastructure.sqlalchemy.session import get_async_session
 from app.domain.repositories import (
     IChargeSettingRepository,
     IChargeSettingVersionRepository,
+    ITransactionRepository,
 )
 from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyChargeSettingRepository,
     SqlAlchemyChargeSettingVersionRepository,
+    SqlAlchemyTransactionRepository,
 )
 from app.domain.ports import IPaymentAdapter
 from app.infrastructure.ports import GrpcTicketService
@@ -55,6 +57,15 @@ def get_payment_adapter(
 
 
 PaymentAdapterDep = Annotated[IPaymentAdapter, Depends(get_payment_adapter)]
+
+
+def get_ITransactionRepository(
+    session: DbSession,
+) -> ITransactionRepository:
+    return SqlAlchemyTransactionRepository(session)
+
+
+TxnRepoDep = Annotated[ITransactionRepository, Depends(get_ITransactionRepository)]
 
 
 def get_charge_setting_repository(
@@ -119,8 +130,14 @@ CreateCheckoutUseCaseDep = Annotated[
 ]
 
 
-def get_VerifyTicketPurchaseTransactionUseCase(payment_adapter: PaymentAdapterDep):
-    return VerifyTicketPurchaseTransactionUseCase(payment_adapter)
+def get_VerifyTicketPurchaseTransactionUseCase(
+    payment_adapter: PaymentAdapterDep,
+    txn_repo: TxnRepoDep,
+):
+    return VerifyTicketPurchaseTransactionUseCase(
+        payment_adapter,
+        txn_repo,
+    )
 
 
 VerifyTicketPurchaseTransactionUseCaseDep = Annotated[

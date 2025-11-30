@@ -2,6 +2,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from app.domain.ports import IPaymentAdapter
+from app.domain.repositories import ITransactionRepository
 from app.domain.entities import Transaction, ChargeData
 from app.config import settings
 from app.utils.signing import sign_payload
@@ -12,8 +13,10 @@ class VerifyTicketPurchaseTransactionUseCase:
     def __init__(
         self,
         payment_adapter: IPaymentAdapter,
+        txn_repo: ITransactionRepository,
     ) -> None:
         self._payment_adapter = payment_adapter
+        self._txn_repo = txn_repo
 
     async def execute(self, reference: str, user_id: UUID):
         ext_transaction = await self._payment_adapter.get_valid_transaction(reference)
@@ -61,6 +64,7 @@ class VerifyTicketPurchaseTransactionUseCase:
             )
             raise AppError("Cannot validate transaction initiated by another user", 403)
 
+        self._txn_repo.save(txn)
         print(f"Created Transaction: \n{txn.model_dump_json()}")
 
         # TODO: Close reservation

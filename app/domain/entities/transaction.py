@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -25,10 +25,22 @@ class ChargeData(BaseModel):
     charge_amount: Decimal = Field(gt=0)
     sponsored: bool
 
+    model_config = {
+        "json_encoders": {
+            Decimal: lambda v: format(v, "f"),
+        }
+    }
+
 
 class SettlementData(BaseModel):
     amount: Decimal = Field(gt=0)
     recipient_user: UUID
+
+    model_config = {
+        "json_encoders": {
+            Decimal: lambda v: format(v, "f"),
+        }
+    }
 
 
 # === Entity ===
@@ -50,6 +62,12 @@ class Transaction(BaseModel):
     settlement_data: list[SettlementData] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Optional[dict] = None
+
+    model_config = {
+        "json_encoders": {
+            Decimal: lambda v: format(v, "f"),
+        }
+    }
 
     @staticmethod
     def create(

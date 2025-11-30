@@ -2,6 +2,8 @@ from typing import Protocol, Optional
 from decimal import Decimal
 from abc import abstractmethod
 
+from ..dto import ExternalTransaction
+
 
 class IPaymentAdapter(Protocol):
     @abstractmethod
@@ -15,4 +17,4 @@ class IPaymentAdapter(Protocol):
     ) -> str: ...
 
     @abstractmethod
-    async def is_transaction_complete(self, reference: str) -> bool: ...
+    async def get_valid_transaction(self, reference: str) -> ExternalTransaction: ...

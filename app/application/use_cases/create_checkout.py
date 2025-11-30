@@ -4,6 +4,7 @@ from app.utils.signing import sign_payload
 from app.shared.errors import AppError
 from app.domain.ports import ITicketService, IPaymentAdapter
 
+from app.application.dto.checkout import CheckoutMetaData
 from app.config import paystack_config
 
 
@@ -51,6 +52,27 @@ class CreateCheckoutUseCase:
         if expected_signature != signature:
             raise AppError("Invalid or malformed request", 400)
 
+        metadata_payload = {
+            "charge_setting_id": charge_setting_id,
+            "version_id": version_id,
+            "version_number": version_number,
+            "calculated_charge": calculated_charge,
+            "ticket_type_id": ticket_type_id,
+            "slug": slug,
+            "user": user_id,
+            "sponsored": False,
+        }
+
+        print(f"Checkout metadata \n{metadata_payload}")
+        metadata_signature = sign_payload(metadata_payload, settings.charge_req_key)
+
+        metadata = CheckoutMetaData.model_validate(
+            {
+                **metadata_payload,
+                "signature": metadata_signature,
+            }
+        )
+
         link = await self._payment_adapter.create_checkout_link(
             amount=base_amount + Decimal(calculated_charge),
             reference=reservation_id,
@@ -60,6 +82,7 @@ class CreateCheckoutUseCase:
                 reservation=reservation_id,
             ),
             email=email,
+            metadata=metadata.model_dump(),
         )
 
         return link

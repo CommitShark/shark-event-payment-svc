@@ -128,6 +128,8 @@ async def app_exception_handler(_: Request, err: AppError):
     if err.payload is not None:
         payload["data"] = err.payload
 
+    print(f"Error: {err.message} Code: {err.error_code}")
+
     return JSONResponse(
         status_code=err.status_code,
         content=payload,

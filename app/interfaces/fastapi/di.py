@@ -14,7 +14,11 @@ from app.infrastructure.sqlalchemy.repositories import (
 from app.domain.ports import IPaymentAdapter
 from app.infrastructure.ports import GrpcTicketService
 from app.domain.services import ChargeCalculationService
-from app.application.use_cases import RequestChargeUseCase, CreateCheckoutUseCase
+from app.application.use_cases import (
+    RequestChargeUseCase,
+    CreateCheckoutUseCase,
+    VerifyTicketPurchaseTransactionUseCase,
+)
 from app.infrastructure.grpc import ticketing_pb2_grpc
 
 
@@ -112,4 +116,14 @@ def get_CreateCheckoutUseCase(
 CreateCheckoutUseCaseDep = Annotated[
     CreateCheckoutUseCase,
     Depends(get_CreateCheckoutUseCase),
+]
+
+
+def get_VerifyTicketPurchaseTransactionUseCase(payment_adapter: PaymentAdapterDep):
+    return VerifyTicketPurchaseTransactionUseCase(payment_adapter)
+
+
+VerifyTicketPurchaseTransactionUseCaseDep = Annotated[
+    VerifyTicketPurchaseTransactionUseCase,
+    Depends(get_VerifyTicketPurchaseTransactionUseCase),
 ]

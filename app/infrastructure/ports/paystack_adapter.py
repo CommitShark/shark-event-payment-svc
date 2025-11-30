@@ -1,9 +1,18 @@
 import json
+import logging
+import traceback
+
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+from datetime import datetime
+from uuid import UUID
 from app.domain.ports import IPaymentAdapter
-from app.shared.errors import AppError
+from app.shared.errors import AppError, ErrorCodes
 from app.utils.external_api_client import ExternalAPIClient
+from app.domain.dto import ExternalTransaction
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseResDto(BaseModel):
@@ -22,13 +31,13 @@ class InitiateTransactionResDto(BaseResDto):
 
 class VerifyTransactionResDataDto(BaseModel):
     status: str
-    reference: str
-    amount: str
-    paid_at: str
+    reference: UUID
+    amount: Decimal
+    paid_at: datetime
     created_at: str
     channel: str
     currency: str
-    metadata: str | None = None
+    metadata: dict | None = None
     fees: Decimal
 
 
@@ -44,15 +53,49 @@ class PaystackAdapter(IPaymentAdapter):
     ) -> None:
         self._client = client
 
-    async def is_transaction_complete(self, reference: str) -> bool:
-        response = await self._client._get(endpoint=f"/transaction/verify/{reference}")
+    async def get_valid_transaction(
+        self,
+        reference: str,
+    ) -> ExternalTransaction:
+        response = await self._client._get(
+            endpoint=f"/transaction/verify/{reference}",
+        )
 
         try:
             parsed_res = VerifyTransactionResDto(**response)
-        except Exception:
-            raise AppError("Could not process payment, try again later", 500)
+        except ValidationError as e:
+            logger.error(
+                "Pydantic validation error while parsing VerifyTransactionResDto: %s",
+                e.json(),
+            )
+            raise AppError(
+                "Could not process payment, try again later",
+                500,
+                error_code=ErrorCodes.DATA_VALIDATION_ERROR,
+            )
+        except Exception as e:
+            logger.error(
+                "Unexpected error while parsing VerifyTransactionResDto\nError: %s\nTraceback:\n%s",
+                str(e),
+                traceback.format_exc(),
+            )
+            raise AppError(
+                "Could not process payment, try again later",
+                500,
+                error_code=ErrorCodes.DATA_VALIDATION_ERROR,
+            )
 
-        return parsed_res.status and parsed_res.data.status == "success"
+        if parsed_res.status and parsed_res.data.status == "success":
+            return ExternalTransaction(
+                amount=Decimal(parsed_res.data.amount) / 100,
+                fees=parsed_res.data.fees,
+                currency=parsed_res.data.currency,
+                metadata=parsed_res.data.metadata,
+                occurred_on=parsed_res.data.paid_at,
+                reference=parsed_res.data.reference,
+            )
+
+        raise AppError("Invalid or unsuccessful transaction", 400)
 
     async def create_checkout_link(
         self,
@@ -73,7 +116,8 @@ class PaystackAdapter(IPaymentAdapter):
             payload["metadata"] = json.dumps(metadata)
 
         response = await self._client.post(
-            endpoint="/transaction/initialize", data=payload
+            endpoint="/transaction/initialize",
+            data=payload,
         )
 
         try:

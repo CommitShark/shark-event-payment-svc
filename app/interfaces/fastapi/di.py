@@ -13,7 +13,7 @@ from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyChargeSettingVersionRepository,
     SqlAlchemyTransactionRepository,
 )
-from app.domain.ports import IPaymentAdapter
+from app.domain.ports import IPaymentAdapter, IEventBus
 from app.infrastructure.ports import GrpcTicketService
 from app.domain.services import ChargeCalculationService
 from app.application.use_cases import (
@@ -21,7 +21,7 @@ from app.application.use_cases import (
     CreateCheckoutUseCase,
     VerifyTicketPurchaseTransactionUseCase,
 )
-from app.infrastructure.grpc import ticketing_pb2_grpc
+from app.infrastructure.grpc import grpc_client
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
@@ -32,19 +32,16 @@ async def get_db() -> AsyncIterator[AsyncSession]:
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 
 
-def get_grpc_ticket_stub(
+def get_IEventBus(
     request: Request,
-) -> ticketing_pb2_grpc.GrpcTicketingServiceStub:
-    stub = getattr(request.app.state, "ticket_stub", None)
-    if not stub:
-        raise RuntimeError("Ticket stub not initialized")
-    return stub
+) -> IEventBus:
+    bus = getattr(request.app.state, "event_bus", None)
+    if not bus:
+        raise RuntimeError("Event bus not initialized")
+    return bus
 
 
-GrpcTicketStubDep = Annotated[
-    ticketing_pb2_grpc.GrpcTicketingServiceStub,
-    Depends(get_grpc_ticket_stub),
-]
+EventBusDep = Annotated[IEventBus, Depends(get_IEventBus)]
 
 
 def get_payment_adapter(
@@ -95,8 +92,9 @@ ChargeSettingVersionRepoDep = Annotated[
 def get_RequestChargeUseCase(
     charge_setting_repo: ChargeSettingRepoDep,
     version_repo: ChargeSettingVersionRepoDep,
-    ticket_stub: GrpcTicketStubDep,
 ):
+    ticket_stub = grpc_client.get_ticket_grpc_stub()
+
     charge_calc_service = ChargeCalculationService(
         charge_setting_repo,
         version_repo,
@@ -115,9 +113,9 @@ RequestChargeUseCaseDep = Annotated[
 
 
 def get_CreateCheckoutUseCase(
-    ticket_stub: GrpcTicketStubDep,
     payment_adapter: PaymentAdapterDep,
 ):
+    ticket_stub = grpc_client.get_ticket_grpc_stub()
     return CreateCheckoutUseCase(
         ticket_service=GrpcTicketService(ticket_stub),
         payment_adapter=payment_adapter,
@@ -133,10 +131,12 @@ CreateCheckoutUseCaseDep = Annotated[
 def get_VerifyTicketPurchaseTransactionUseCase(
     payment_adapter: PaymentAdapterDep,
     txn_repo: TxnRepoDep,
+    event_bus: EventBusDep,
 ):
     return VerifyTicketPurchaseTransactionUseCase(
         payment_adapter,
         txn_repo,
+        event_bus,
     )
 
 

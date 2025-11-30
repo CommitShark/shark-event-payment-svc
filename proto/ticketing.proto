@@ -8,6 +8,16 @@ service GrpcTicketingService {
   rpc CheckReservation(CheckReservationRequest) returns (CheckReservationResponse);
 
   rpc GetTicketPrice(GetTicketPriceRequest) returns (GetTicketPriceResponse);
+
+  rpc MarkReservationAsPaid(MarkReservationAsPaidRequest) returns (MarkReservationAsPaidResponse);
+}
+
+message MarkReservationAsPaidRequest {
+    string reservation_id = 1;
+}
+
+message MarkReservationAsPaidResponse {
+    optional string error = 1;
 }
 
 message GetTicketPriceRequest {

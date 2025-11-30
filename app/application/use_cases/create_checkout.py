@@ -63,7 +63,6 @@ class CreateCheckoutUseCase:
             "sponsored": False,
         }
 
-        print(f"Checkout metadata \n{metadata_payload}")
         metadata_signature = sign_payload(metadata_payload, settings.charge_req_key)
 
         metadata = CheckoutMetaData.model_validate(

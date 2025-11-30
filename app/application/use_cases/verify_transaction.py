@@ -1,7 +1,8 @@
+import logging
 from decimal import Decimal
 from uuid import UUID
 
-from app.domain.ports import IPaymentAdapter
+from app.domain.ports import IPaymentAdapter, IEventBus
 from app.domain.repositories import ITransactionRepository
 from app.domain.entities import Transaction, ChargeData
 from app.config import settings
@@ -9,35 +10,51 @@ from app.utils.signing import sign_payload
 from app.shared.errors import AppError
 
 
+logger = logging.getLogger(__name__)
+
+
 class VerifyTicketPurchaseTransactionUseCase:
     def __init__(
         self,
         payment_adapter: IPaymentAdapter,
         txn_repo: ITransactionRepository,
+        event_bus: IEventBus,
     ) -> None:
         self._payment_adapter = payment_adapter
         self._txn_repo = txn_repo
+        self._event_bus = event_bus
 
     async def execute(self, reference: str, user_id: UUID):
         ext_transaction = await self._payment_adapter.get_valid_transaction(reference)
 
         if not ext_transaction.metadata:
-            print("Metadata not found")
+            logger.debug("Metadata not found")
             raise AppError("Malformed transaction. Please contact support", 500)
+
+        # Check if transaction reference has already been recorded
+        existing_txn = await self._txn_repo.get_by_reference_or_none(
+            ext_transaction.reference
+        )
+
+        if existing_txn:
+            logger.debug(
+                "transaction for reference %s already exists",
+                str(ext_transaction.reference),
+            )
+            return
 
         metadata: dict = ext_transaction.metadata
         signature = metadata.pop("signature", None)
         _ = metadata.pop("referrer")
 
         if not signature:
-            print("Signature not found")
+            logger.debug("Signature not found")
             raise AppError("Malformed transaction. Please contact support", 500)
 
-        print(f"Loaded metadata \n{metadata}")
         expected_signature = sign_payload(metadata, settings.charge_req_key)
 
         if expected_signature != signature:
-            print("Signature mismatch")
+            logger.debug("Signature mismatch")
             raise AppError("Malformed transaction. Please contact support", 500)
 
         txn = Transaction.create(
@@ -59,12 +76,12 @@ class VerifyTicketPurchaseTransactionUseCase:
         )
 
         if user_id != txn.user_id:
-            print(
+            logger.debug(
                 f"User mismatch. \nOriginal User = {txn.user_id} \nUser Attempting Validation = {user_id}"
             )
             raise AppError("Cannot validate transaction initiated by another user", 403)
 
         self._txn_repo.save(txn)
-        print(f"Created Transaction: \n{txn.model_dump_json()}")
 
-        # TODO: Close reservation
+        for e in txn.events:
+            await self._event_bus.publish(e)

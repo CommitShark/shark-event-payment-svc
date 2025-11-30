@@ -8,6 +8,18 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class MarkReservationAsPaidRequest(_message.Message):
+    __slots__ = ("reservation_id",)
+    RESERVATION_ID_FIELD_NUMBER: _ClassVar[int]
+    reservation_id: str
+    def __init__(self, reservation_id: _Optional[str] = ...) -> None: ...
+
+class MarkReservationAsPaidResponse(_message.Message):
+    __slots__ = ("error",)
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    error: str
+    def __init__(self, error: _Optional[str] = ...) -> None: ...
+
 class GetTicketPriceRequest(_message.Message):
     __slots__ = ("ticket_type_id",)
     TICKET_TYPE_ID_FIELD_NUMBER: _ClassVar[int]

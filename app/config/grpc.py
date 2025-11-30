@@ -7,6 +7,7 @@ class GrpcSettings(BaseSettings):
     )
 
     ticket_svc_target: str = "127.0.0.1:50051"
+    user_svc_target: str = "127.0.0.1:50052"
 
 
 grpc_config = GrpcSettings()  # type:ignore

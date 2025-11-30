@@ -11,3 +11,6 @@ class ITicketService(Protocol):
     async def reservation_is_valid(
         self, reservation_id: str
     ) -> tuple[bool, str | None]: ...
+
+    @abstractmethod
+    async def mark_reservation_as_paid(self, reservation_id: str): ...

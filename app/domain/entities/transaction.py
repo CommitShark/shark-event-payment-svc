@@ -1,11 +1,18 @@
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Optional, Literal
+from typing import Optional, Literal, Any
+
+from app.shared.errors import AppError
+from ..events import TransactionCreatedEvent
+from ..events.base import DomainEvent
 
 TransactionSettlementStatus = Literal[
-    "pending", "in_progress", "failed", "completed", "not_applicable"
+    "pending",
+    "failed",
+    "completed",
+    "not_applicable",
 ]
 TransactionType = Literal[
     "purchase",
@@ -35,6 +42,7 @@ class ChargeData(BaseModel):
 class SettlementData(BaseModel):
     amount: Decimal = Field(gt=0)
     recipient_user: UUID
+    transaction_type: TransactionType
 
     model_config = {
         "json_encoders": {
@@ -63,11 +71,43 @@ class Transaction(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Optional[dict] = None
 
+    _events: list[DomainEvent[Any]] = []
+
     model_config = {
         "json_encoders": {
             Decimal: lambda v: format(v, "f"),
         }
     }
+
+    @property
+    def events(self):
+        events_ = list(self._events)
+        self._events.clear()
+        return events_
+
+    def add_settlement(self, data: SettlementData):
+        if self.settlement_status != "pending":
+            raise AppError(
+                "Transaction state is invalid. Cannot modify settlement", 409
+            )
+
+        self.settlement_data.append(data)
+
+    def create_settlement_transactions(self) -> list["Transaction"]:
+        return [
+            Transaction.create(
+                amount=s.amount,
+                user_id=s.recipient_user,
+                resource=self.resource,
+                resource_id=self.resource_id,
+                occurred_on=datetime.now(timezone.utc),
+                transaction_type=s.transaction_type,
+                source=self.source,
+                reference=uuid4(),
+                settlement_status="not_applicable",
+            )
+            for s in self.settlement_data
+        ]
 
     @staticmethod
     def create(
@@ -97,7 +137,7 @@ class Transaction(BaseModel):
             }
             transaction_direction = direction_map[transaction_type]
 
-        return Transaction(
+        txn = Transaction(
             amount=amount,
             user_id=user_id,
             resource=resource,
@@ -112,3 +152,7 @@ class Transaction(BaseModel):
             metadata=metadata,
             source=source,
         )
+
+        txn._events.append(TransactionCreatedEvent.create(txn))
+
+        return txn

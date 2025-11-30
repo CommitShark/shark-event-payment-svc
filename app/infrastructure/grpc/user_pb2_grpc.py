@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from app.infrastructure.grpc import ticketing_pb2 as ticketing__pb2
+from app.infrastructure.grpc import user_pb2 as user__pb2
 
 GRPC_GENERATED_VERSION = "1.76.0"
 GRPC_VERSION = grpc.__version__
@@ -21,14 +21,14 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f"The grpc package installed is at version {GRPC_VERSION},"
-        + " but the generated code in ticketing_pb2_grpc.py depends on"
+        + " but the generated code in user_pb2_grpc.py depends on"
         + f" grpcio>={GRPC_GENERATED_VERSION}."
         + f" Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}"
         + f" or downgrade your generated code using grpcio-tools<={GRPC_VERSION}."
     )
 
 
-class GrpcTicketingServiceStub(object):
+class GrpcUserServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -37,81 +37,79 @@ class GrpcTicketingServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.CheckReservation = channel.unary_unary(
-            "/ticketing.GrpcTicketingService/CheckReservation",
-            request_serializer=ticketing__pb2.CheckReservationRequest.SerializeToString,
-            response_deserializer=ticketing__pb2.CheckReservationResponse.FromString,
+        self.GetEventOrganizer = channel.unary_unary(
+            "/user.GrpcUserService/GetEventOrganizer",
+            request_serializer=user__pb2.GetEventOrganizerRequest.SerializeToString,
+            response_deserializer=user__pb2.GetEventOrganizerResponse.FromString,
             _registered_method=True,
         )
-        self.GetTicketPrice = channel.unary_unary(
-            "/ticketing.GrpcTicketingService/GetTicketPrice",
-            request_serializer=ticketing__pb2.GetTicketPriceRequest.SerializeToString,
-            response_deserializer=ticketing__pb2.GetTicketPriceResponse.FromString,
+        self.GetSystemUser = channel.unary_unary(
+            "/user.GrpcUserService/GetSystemUser",
+            request_serializer=user__pb2.GetSystemUserRequest.SerializeToString,
+            response_deserializer=user__pb2.GetSystemUserResponse.FromString,
             _registered_method=True,
         )
-        self.MarkReservationAsPaid = channel.unary_unary(
-            "/ticketing.GrpcTicketingService/MarkReservationAsPaid",
-            request_serializer=ticketing__pb2.MarkReservationAsPaidRequest.SerializeToString,
-            response_deserializer=ticketing__pb2.MarkReservationAsPaidResponse.FromString,
+        self.GetReferralInfo = channel.unary_unary(
+            "/user.GrpcUserService/GetReferralInfo",
+            request_serializer=user__pb2.GetReferralInfoRequest.SerializeToString,
+            response_deserializer=user__pb2.GetReferralInfoResponse.FromString,
             _registered_method=True,
         )
 
 
-class GrpcTicketingServiceServicer(object):
+class GrpcUserServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def CheckReservation(self, request, context):
+    def GetEventOrganizer(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
-    def GetTicketPrice(self, request, context):
+    def GetSystemUser(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
-    def MarkReservationAsPaid(self, request, context):
+    def GetReferralInfo(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
 
-def add_GrpcTicketingServiceServicer_to_server(servicer, server):
+def add_GrpcUserServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-        "CheckReservation": grpc.unary_unary_rpc_method_handler(
-            servicer.CheckReservation,
-            request_deserializer=ticketing__pb2.CheckReservationRequest.FromString,
-            response_serializer=ticketing__pb2.CheckReservationResponse.SerializeToString,
+        "GetEventOrganizer": grpc.unary_unary_rpc_method_handler(
+            servicer.GetEventOrganizer,
+            request_deserializer=user__pb2.GetEventOrganizerRequest.FromString,
+            response_serializer=user__pb2.GetEventOrganizerResponse.SerializeToString,
         ),
-        "GetTicketPrice": grpc.unary_unary_rpc_method_handler(
-            servicer.GetTicketPrice,
-            request_deserializer=ticketing__pb2.GetTicketPriceRequest.FromString,
-            response_serializer=ticketing__pb2.GetTicketPriceResponse.SerializeToString,
+        "GetSystemUser": grpc.unary_unary_rpc_method_handler(
+            servicer.GetSystemUser,
+            request_deserializer=user__pb2.GetSystemUserRequest.FromString,
+            response_serializer=user__pb2.GetSystemUserResponse.SerializeToString,
         ),
-        "MarkReservationAsPaid": grpc.unary_unary_rpc_method_handler(
-            servicer.MarkReservationAsPaid,
-            request_deserializer=ticketing__pb2.MarkReservationAsPaidRequest.FromString,
-            response_serializer=ticketing__pb2.MarkReservationAsPaidResponse.SerializeToString,
+        "GetReferralInfo": grpc.unary_unary_rpc_method_handler(
+            servicer.GetReferralInfo,
+            request_deserializer=user__pb2.GetReferralInfoRequest.FromString,
+            response_serializer=user__pb2.GetReferralInfoResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-        "ticketing.GrpcTicketingService", rpc_method_handlers
+        "user.GrpcUserService", rpc_method_handlers
     )
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers(
-        "ticketing.GrpcTicketingService", rpc_method_handlers
-    )
+    server.add_registered_method_handlers("user.GrpcUserService", rpc_method_handlers)
 
 
 # This class is part of an EXPERIMENTAL API.
-class GrpcTicketingService(object):
+class GrpcUserService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def CheckReservation(
+    def GetEventOrganizer(
         request,
         target,
         options=(),
@@ -126,9 +124,9 @@ class GrpcTicketingService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/ticketing.GrpcTicketingService/CheckReservation",
-            ticketing__pb2.CheckReservationRequest.SerializeToString,
-            ticketing__pb2.CheckReservationResponse.FromString,
+            "/user.GrpcUserService/GetEventOrganizer",
+            user__pb2.GetEventOrganizerRequest.SerializeToString,
+            user__pb2.GetEventOrganizerResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -141,7 +139,7 @@ class GrpcTicketingService(object):
         )
 
     @staticmethod
-    def GetTicketPrice(
+    def GetSystemUser(
         request,
         target,
         options=(),
@@ -156,9 +154,9 @@ class GrpcTicketingService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/ticketing.GrpcTicketingService/GetTicketPrice",
-            ticketing__pb2.GetTicketPriceRequest.SerializeToString,
-            ticketing__pb2.GetTicketPriceResponse.FromString,
+            "/user.GrpcUserService/GetSystemUser",
+            user__pb2.GetSystemUserRequest.SerializeToString,
+            user__pb2.GetSystemUserResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -171,7 +169,7 @@ class GrpcTicketingService(object):
         )
 
     @staticmethod
-    def MarkReservationAsPaid(
+    def GetReferralInfo(
         request,
         target,
         options=(),
@@ -186,9 +184,9 @@ class GrpcTicketingService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/ticketing.GrpcTicketingService/MarkReservationAsPaid",
-            ticketing__pb2.MarkReservationAsPaidRequest.SerializeToString,
-            ticketing__pb2.MarkReservationAsPaidResponse.FromString,
+            "/user.GrpcUserService/GetReferralInfo",
+            user__pb2.GetReferralInfoRequest.SerializeToString,
+            user__pb2.GetReferralInfoResponse.FromString,
             options,
             channel_credentials,
             insecure,

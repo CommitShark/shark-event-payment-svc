@@ -11,9 +11,10 @@ from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyChargeSettingRepository,
     SqlAlchemyChargeSettingVersionRepository,
 )
+from app.domain.ports import IPaymentAdapter
 from app.infrastructure.ports import GrpcTicketService
 from app.domain.services import ChargeCalculationService
-from app.application.use_cases import RequestChargeUseCase
+from app.application.use_cases import RequestChargeUseCase, CreateCheckoutUseCase
 from app.infrastructure.grpc import ticketing_pb2_grpc
 
 
@@ -38,6 +39,18 @@ GrpcTicketStubDep = Annotated[
     ticketing_pb2_grpc.GrpcTicketingServiceStub,
     Depends(get_grpc_ticket_stub),
 ]
+
+
+def get_payment_adapter(
+    request: Request,
+) -> IPaymentAdapter:
+    adapter = getattr(request.app.state, "paystack_adapter", None)
+    if not adapter:
+        raise RuntimeError("Paystack adapter not initialized")
+    return adapter
+
+
+PaymentAdapterDep = Annotated[IPaymentAdapter, Depends(get_payment_adapter)]
 
 
 def get_charge_setting_repository(
@@ -81,5 +94,22 @@ def get_RequestChargeUseCase(
 
 
 RequestChargeUseCaseDep = Annotated[
-    RequestChargeUseCase, Depends(get_RequestChargeUseCase)
+    RequestChargeUseCase,
+    Depends(get_RequestChargeUseCase),
+]
+
+
+def get_CreateCheckoutUseCase(
+    ticket_stub: GrpcTicketStubDep,
+    payment_adapter: PaymentAdapterDep,
+):
+    return CreateCheckoutUseCase(
+        ticket_service=GrpcTicketService(ticket_stub),
+        payment_adapter=payment_adapter,
+    )
+
+
+CreateCheckoutUseCaseDep = Annotated[
+    CreateCheckoutUseCase,
+    Depends(get_CreateCheckoutUseCase),
 ]

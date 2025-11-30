@@ -5,13 +5,15 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.config import grpc_config
+from app.config import grpc_config, paystack_config
 from app.config.http import HttpSettings
 from app.config.sqlalchemy import DatabaseSettings
 from app.shared.errors import AppError
 
 from app.infrastructure.grpc import ticketing_pb2_grpc
-from .endpoints.v1 import charges
+from app.infrastructure.ports import PaystackAdapter
+from app.utils.external_api_client import ExternalAPIClient
+from .endpoints.v1 import charges, checkout
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -65,12 +67,21 @@ async def app_lifespan(app: FastAPI):
         app.state.ticket_channel
     )
 
+    paystack_client = ExternalAPIClient(
+        base_url=paystack_config.url,
+        headers={
+            "Authorization": f"Bearer {paystack_config.secret_key}",
+        },
+    )
+    app.state.paystack_adapter = PaystackAdapter(client=paystack_client)
+
     logger.info("Application startup complete")
 
     yield
 
     # 4. Cleanup
     await app.state.ticket_channel.close()
+    await paystack_client.close()
     # await kafka_event_bus.disconnect()
     # await permify_client.client.aclose()
     logger.info("Application shutdown complete")
@@ -94,6 +105,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(charges.router)
+    app.include_router(checkout.router)
 
     logger.info(
         "FastAPI application created with root path: %s",

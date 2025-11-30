@@ -4,6 +4,7 @@ from .http import http_config
 from .generic import settings
 from .sqlalchemy import db_config
 from .grpc import grpc_config
+from .paystack import paystack_config
 
 __all__ = [
     "logging_config",
@@ -12,4 +13,5 @@ __all__ = [
     "settings",
     "db_config",
     "grpc_config",
+    "paystack_config",
 ]

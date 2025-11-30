@@ -1,1 +1,4 @@
 Add distributed cache so that service can check there for reservation before resorting to calling ticket service via gRPC
+get_ticket_type_charge: Can slug come from the internal req?
+Solve for duplicate transaction reference
+On successful purchase move reservation closed

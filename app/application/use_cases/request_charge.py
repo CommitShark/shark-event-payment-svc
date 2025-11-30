@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from app.config import settings
 from app.domain.repositories import IChargeSettingRepository
 from app.domain.ports import ITicketService
@@ -24,6 +22,7 @@ class RequestChargeUseCase:
         user_id: str,
         charge_type: str,
         ticket_type_id: str,
+        slug: str,
     ):
         amount = await self._ticket_service.get_ticket_price(ticket_type_id)
 
@@ -42,9 +41,14 @@ class RequestChargeUseCase:
             )
 
         payload = {
-            **charge_data,
+            "base_amount": charge_data["base_amount"],
+            "charge_setting_id": charge_data["charge_setting_id"],
+            "version_id": charge_data["version_id"],
+            "version_number": charge_data["version_number"],
+            "calculated_charge": charge_data["calculated_charge"],
             "user": user_id,
             "ticket_type": ticket_type_id,
+            "slug": slug,
         }
 
         signature = sign_payload(payload, settings.charge_req_key)

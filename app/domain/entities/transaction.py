@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Optional, Literal, Any
 
 from app.shared.errors import AppError
-from ..events import TransactionCreatedEvent
+from ..events import TransactionCreatedEvent, PurchaseSettledEvent
 from ..events.base import DomainEvent
 
 TransactionSettlementStatus = Literal[
@@ -85,12 +85,16 @@ class Transaction(BaseModel):
         self._events.clear()
         return events_
 
+    def complete_settlement(self):
+        self.settlement_status = "completed"
+        if self.transaction_type == "purchase":
+            self._events.append(PurchaseSettledEvent.create(self))
+
     def add_settlement(self, data: SettlementData):
         if self.settlement_status != "pending":
             raise AppError(
                 "Transaction state is invalid. Cannot modify settlement", 409
             )
-
         self.settlement_data.append(data)
 
     def create_settlement_transactions(self) -> list["Transaction"]:

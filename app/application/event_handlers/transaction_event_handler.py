@@ -5,14 +5,14 @@ from typing import cast
 from decimal import Decimal, ROUND_HALF_UP
 
 from app.domain.repositories import ITransactionRepository
-from app.domain.ports import ITicketService, IUserService
+from app.domain.ports import ITicketService, IUserService, IEventBus
 from app.domain.entities import SettlementData, Transaction
 from app.domain.events import TransactionCreatedEvent, TransactionCreatedPayload
 from app.domain.events.base import DomainEvent
 from app.shared.errors import AppError
 
 from .base import IEventHandler
-from .di import get_ticket_service, txn_repo_context, get_user_service
+from .di import get_ticket_service, txn_repo_context, get_user_service, get_event_bus
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class TransactionEventHandler(IEventHandler):
 
         ticket_service = get_ticket_service()
         user_service = get_user_service()
+        event_bus = get_event_bus()
         payload = cast(TransactionCreatedPayload, event.payload)
 
         async with txn_repo_context() as txn_repo:
@@ -52,11 +53,13 @@ class TransactionEventHandler(IEventHandler):
                     user_service=user_service,
                     payload=payload,
                     txn=txn,
+                    event_bus=event_bus,
                 )
+            elif txn.transaction_type == "sale" or txn.transaction_type == "commission":
+                # update users balance
+                return
             else:
                 raise AppError(f"{txn} not implemented", 500)
-
-            # TODO: Update balances if required
 
     async def _settle_ticket_purchase_txn(
         self,
@@ -65,6 +68,7 @@ class TransactionEventHandler(IEventHandler):
         ticket_service: ITicketService,
         user_service: IUserService,
         payload: TransactionCreatedPayload,
+        event_bus: IEventBus,
     ):
 
         # Validate charge data exists
@@ -74,7 +78,14 @@ class TransactionEventHandler(IEventHandler):
         # Close Reservation
         await ticket_service.mark_reservation_as_paid(payload.reference)
 
-        organizer = await user_service.get_event_organizer(str(txn.resource_id))
+        slug = txn.metadata.get("slug", None) if txn.metadata else None
+
+        if not slug:
+            raise AppError(
+                f"Transaction {payload.reference} missing event slug metadata", 400
+            )
+
+        organizer = await user_service.get_event_organizer(slug=slug)
 
         (
             system,
@@ -174,7 +185,12 @@ class TransactionEventHandler(IEventHandler):
         for s_txn in settlement_transactions:
             txn_repo.save(s_txn)
 
-        # TODO: Emit event to send successful ticket purchase
+        for ev in txn.events:
+            await event_bus.publish(ev)
+
+        for s_txn in settlement_transactions:
+            for s_ev in s_txn.events:
+                await event_bus.publish(s_ev)
 
         logger.info(
             f"Transaction {payload.reference} processed successfully. "

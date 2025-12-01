@@ -60,19 +60,20 @@ class VerifyTicketPurchaseTransactionUseCase:
         txn = Transaction.create(
             amount=ext_transaction.amount,
             charge_data=ChargeData(
-                charge_setting_id=metadata["charge_setting_id"],
-                charge_amount=Decimal(metadata["calculated_charge"]),
-                sponsored=bool(metadata["sponsored"]),
-                version_id=metadata["version_id"],
-                version_number=metadata["version_number"],
+                charge_setting_id=metadata.pop("charge_setting_id"),
+                charge_amount=Decimal(metadata.pop("calculated_charge")),
+                sponsored=bool(metadata.pop("sponsored")),
+                version_id=metadata.pop("version_id"),
+                version_number=metadata.pop("version_number"),
             ),
             occurred_on=ext_transaction.occurred_on,
             reference=ext_transaction.reference,
             resource="ticket",
-            resource_id=UUID(metadata["ticket_type_id"]),
+            resource_id=UUID(metadata.pop("ticket_type_id")),
             source="payment_provider",
             transaction_type="purchase",
-            user_id=UUID(metadata["user"]),
+            user_id=UUID(metadata.pop("user")),
+            metadata=metadata,
         )
 
         if user_id != txn.user_id:

@@ -14,7 +14,7 @@ from app.config import (
 from app.config.http import HttpSettings
 from app.config.sqlalchemy import DatabaseSettings
 from app.shared.errors import AppError
-from app.infrastructure.ports import KafkaEventBus
+from app.infrastructure.ports.kafka_event_bus import kafka_event_bus
 
 
 from app.domain.ports import IEventBus
@@ -60,11 +60,6 @@ async def setup_handlers(event_bus: IEventBus):
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
     """Configure app dependencies during startup"""
-
-    kafka_event_bus = KafkaEventBus(
-        bootstrap_servers=kafka_config.bootstrap_servers,
-        group_id=kafka_config.group_id,
-    )
 
     app.state.event_bus = kafka_event_bus
 

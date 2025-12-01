@@ -9,7 +9,7 @@ service GrpcUserService {
 }
 
 message GetEventOrganizerRequest {
-    string ticket_type_id = 1;
+    string slug = 1;
 }
 
 message GetEventOrganizerResponse {

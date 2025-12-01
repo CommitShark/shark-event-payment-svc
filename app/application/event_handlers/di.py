@@ -7,11 +7,17 @@ from app.infrastructure.sqlalchemy.session import get_async_session
 from app.infrastructure.sqlalchemy.repositories import SqlAlchemyTransactionRepository
 from app.infrastructure.grpc import grpc_client
 from app.infrastructure.ports import GrpcTicketService, GrpcUserService
+from app.domain.ports import IEventBus
+from app.infrastructure.ports.kafka_event_bus import kafka_event_bus
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
     async with get_async_session() as session:
         yield session
+
+
+def get_event_bus() -> IEventBus:
+    return kafka_event_bus
 
 
 def get_txn_repo(

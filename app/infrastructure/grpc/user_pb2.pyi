@@ -5,10 +5,10 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class GetEventOrganizerRequest(_message.Message):
-    __slots__ = ("ticket_type_id",)
-    TICKET_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
-    ticket_type_id: str
-    def __init__(self, ticket_type_id: _Optional[str] = ...) -> None: ...
+    __slots__ = ("slug",)
+    SLUG_FIELD_NUMBER: _ClassVar[int]
+    slug: str
+    def __init__(self, slug: _Optional[str] = ...) -> None: ...
 
 class GetEventOrganizerResponse(_message.Message):
     __slots__ = ("error", "user_id")

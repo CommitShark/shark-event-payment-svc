@@ -8,6 +8,7 @@ from aiokafka import AIOKafkaConsumer, AIOKafkaProducer, ConsumerRecord  # type:
 from app.domain.events.base import DomainEvent
 from app.domain.events.registry import EventRegistry
 from app.domain.ports import IEventBus
+from app.config import kafka_config
 
 logger = logging.getLogger(__name__)
 
@@ -221,3 +222,9 @@ class KafkaEventBus(IEventBus):
 
         except Exception as e:
             logger.error(f"Failed to process message from topic {message.topic}: {e}")
+
+
+kafka_event_bus = KafkaEventBus(
+    bootstrap_servers=kafka_config.bootstrap_servers,
+    group_id=kafka_config.group_id,
+)

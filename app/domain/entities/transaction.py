@@ -70,6 +70,7 @@ class Transaction(BaseModel):
     settlement_data: list[SettlementData] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Optional[dict] = None
+    parent_id: Optional[UUID] = None
 
     _events: list[DomainEvent[Any]] = []
 
@@ -108,7 +109,8 @@ class Transaction(BaseModel):
                 transaction_type=s.transaction_type,
                 source=self.source,
                 reference=uuid4(),
-                settlement_status="not_applicable",
+                settlement_status="pending",
+                parent_id=self.id,
             )
             for s in self.settlement_data
         ]
@@ -129,6 +131,7 @@ class Transaction(BaseModel):
         settlement_data: Optional[list[SettlementData]] = None,
         metadata: Optional[dict] = None,
         transaction_direction: Optional[TransactionDirection] = None,
+        parent_id: Optional[UUID] = None,
     ) -> "Transaction":
 
         # Automatic direction logic
@@ -155,6 +158,7 @@ class Transaction(BaseModel):
             settlement_data=settlement_data or [],
             metadata=metadata,
             source=source,
+            parent_id=parent_id,
         )
 
         txn._events.append(TransactionCreatedEvent.create(txn))

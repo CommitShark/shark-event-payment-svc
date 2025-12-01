@@ -32,7 +32,7 @@ class TransactionCreatedEvent(DomainEvent[TransactionCreatedPayload]):
     @classmethod
     def create(cls, txn: "Transaction"):
         return cls(
-            aggregate_id=str(txn.id),
+            aggregate_id=str(txn.reference),
             payload=TransactionCreatedPayload(
                 amount=txn.amount,
                 occurred_on=txn.occurred_on,

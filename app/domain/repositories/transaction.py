@@ -7,7 +7,7 @@ from ..entities import Transaction
 
 class ITransactionRepository(Protocol):
     @abstractmethod
-    def save(self, txn: Transaction) -> None: ...
+    async def save(self, txn: Transaction) -> None: ...
 
     @abstractmethod
     async def get_by_reference_or_none(

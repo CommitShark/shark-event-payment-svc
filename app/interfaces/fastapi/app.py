@@ -26,7 +26,11 @@ from app.application.event_handlers import TransactionEventHandler
 from .endpoints.v1 import charges, checkout
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()],
+)
 
 
 async def setup_handlers(event_bus: IEventBus):

@@ -3,7 +3,6 @@ import httpx
 
 from app.shared.errors import InternalAppError
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

@@ -38,7 +38,7 @@ class SqlAlchemyWallet(Base):
 
     txn_pin: Mapped[Optional[str]] = mapped_column(
         String(4),
-        nullable=False,
+        nullable=True,
     )
 
     @classmethod

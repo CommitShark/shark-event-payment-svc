@@ -25,23 +25,21 @@ class VerifyTicketPurchaseTransactionUseCase:
         self._event_bus = event_bus
 
     async def execute(self, reference: str, user_id: UUID):
+        # Check if transaction reference has already been recorded
+        existing_txn = await self._txn_repo.get_by_reference_or_none(UUID(reference))
+
+        if existing_txn:
+            logger.debug(
+                "transaction for reference %s already exists",
+                reference,
+            )
+            return
+
         ext_transaction = await self._payment_adapter.get_valid_transaction(reference)
 
         if not ext_transaction.metadata:
             logger.debug("Metadata not found")
             raise AppError("Malformed transaction. Please contact support", 500)
-
-        # Check if transaction reference has already been recorded
-        existing_txn = await self._txn_repo.get_by_reference_or_none(
-            ext_transaction.reference
-        )
-
-        if existing_txn:
-            logger.debug(
-                "transaction for reference %s already exists",
-                str(ext_transaction.reference),
-            )
-            return
 
         metadata: dict = ext_transaction.metadata
         signature = metadata.pop("signature", None)
@@ -82,7 +80,7 @@ class VerifyTicketPurchaseTransactionUseCase:
             )
             raise AppError("Cannot validate transaction initiated by another user", 403)
 
-        self._txn_repo.save(txn)
+        await self._txn_repo.save(txn)
 
         for e in txn.events:
             await self._event_bus.publish(e)

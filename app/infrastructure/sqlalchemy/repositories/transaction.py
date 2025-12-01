@@ -16,10 +16,11 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
     ) -> None:
         self._session = session
 
-    def save(self, txn: Transaction) -> None:
+    async def save(self, txn: Transaction) -> None:
         entity = SqlAlchemyTransaction.from_domain(txn)
-        print(entity.amount, entity.charge_data, entity.settlement_data)
-        self._session.add(entity)
+        # print(entity.amount, entity.charge_data, entity.settlement_data)
+        await self._session.merge(entity)
+        await self._session.flush()
 
     async def get_by_reference_or_none(
         self,

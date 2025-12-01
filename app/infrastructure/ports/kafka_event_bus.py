@@ -11,6 +11,7 @@ from app.domain.ports import IEventBus
 from app.config import kafka_config
 
 logger = logging.getLogger(__name__)
+logging.getLogger("aiokafka").setLevel(logging.CRITICAL)
 
 
 class KafkaEventBus(IEventBus):

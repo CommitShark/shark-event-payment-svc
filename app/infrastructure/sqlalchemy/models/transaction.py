@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Numeric,
     JSON,
+    ForeignKey,
 )
 
 from uuid import UUID as PyUUID
@@ -85,7 +86,7 @@ class SqlAlchemyTransaction(Base):
         nullable=False,
     )
 
-    settlement_data: Mapped[list[Dict[str, Any]]] = mapped_column(
+    settlement_data: Mapped[list[str]] = mapped_column(
         JSON,
         nullable=False,
     )
@@ -97,6 +98,12 @@ class SqlAlchemyTransaction(Base):
 
     metadata_: Mapped[Optional[dict]] = mapped_column(
         JSON, nullable=True, name="metadata"
+    )
+
+    parent_id: Mapped[Optional[PyUUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("transactions.id", ondelete="RESTRICT"),
+        nullable=True,
     )
 
     @classmethod
@@ -116,9 +123,10 @@ class SqlAlchemyTransaction(Base):
             settlement_status=data.settlement_status,
             transaction_type=data.transaction_type,
             transaction_direction=data.transaction_direction,
-            settlement_data=[s.model_dump() for s in data.settlement_data],
+            settlement_data=[s.model_dump_json() for s in data.settlement_data],
             created_at=data.created_at,
             metadata_=data.metadata,
+            parent_id=data.parent_id,
         )
 
     def to_domain(self) -> "Transaction":
@@ -140,8 +148,9 @@ class SqlAlchemyTransaction(Base):
             transaction_type=self.transaction_type,
             transaction_direction=self.transaction_direction,
             settlement_data=[
-                SettlementData.model_validate(s) for s in self.settlement_data
+                SettlementData.model_validate_json(s) for s in self.settlement_data
             ],
             created_at=self.created_at,
             metadata=self.metadata_,
+            parent_id=self.parent_id,
         )

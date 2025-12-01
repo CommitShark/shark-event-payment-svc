@@ -9,6 +9,7 @@ from .transaction import (
     ChargeData,
     SettlementData,
 )
+from .wallet import Wallet
 
 __all__ = [
     "ChargeSetting",
@@ -21,4 +22,5 @@ __all__ = [
     "Transaction",
     "ChargeData",
     "SettlementData",
+    "Wallet",
 ]

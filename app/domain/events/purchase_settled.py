@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 from uuid import UUID
 from decimal import Decimal
-from typing import ClassVar, TYPE_CHECKING
+from typing import ClassVar, TYPE_CHECKING, Any
 from app.shared.errors import AppError
 
 from .base import DomainEvent
 
 if TYPE_CHECKING:
-    from app.domain.entities import Transaction
+    from app.domain.entities.transaction import Transaction
 
 
 class PurchaseSettledPayload(BaseModel):
@@ -17,6 +17,7 @@ class PurchaseSettledPayload(BaseModel):
     reference: str
     resource_id: UUID
     slug: str
+    settlement_data: list[Any]  # TODO: Resolve circular Deps
 
     model_config = {"frozen": True}
 
@@ -33,7 +34,7 @@ class PurchaseSettledEvent(DomainEvent[PurchaseSettledPayload]):
             raise AppError("Malformed transaction. Slug not found", 400)
 
         return cls(
-            aggregate_id=str(txn.id),
+            aggregate_id=str(txn.reference),
             payload=PurchaseSettledPayload(
                 amount=txn.amount,
                 resource=txn.resource,
@@ -41,6 +42,7 @@ class PurchaseSettledEvent(DomainEvent[PurchaseSettledPayload]):
                 user_id=txn.user_id,
                 reference=str(txn.reference),
                 slug=slug,
+                settlement_data=txn.settlement_data,
             ),
         )
 

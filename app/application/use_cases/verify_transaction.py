@@ -4,7 +4,8 @@ from uuid import UUID
 
 from app.domain.ports import IPaymentAdapter, IEventBus
 from app.domain.repositories import ITransactionRepository
-from app.domain.entities import Transaction, ChargeData
+from app.domain.entities import Transaction
+from app.domain.entities.value_objects import ChargeData
 from app.config import settings
 from app.utils.signing import sign_payload
 from app.shared.errors import AppError

@@ -6,7 +6,8 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from app.domain.repositories import ITransactionRepository, IWalletRepository
 from app.domain.ports import ITicketService, IUserService, IEventBus
-from app.domain.entities import SettlementData, Transaction
+from app.domain.entities import Transaction
+from app.domain.entities.value_objects import SettlementData
 from app.domain.events import (
     TransactionCreatedEvent,
     TransactionCreatedPayload,
@@ -27,7 +28,7 @@ from .di import (
 
 logger = logging.getLogger(__name__)
 
-REFERRAL_PERCENTAGE = Decimal("20")
+REFERRAL_PERCENTAGE = Decimal("12")
 
 
 class TransactionEventHandler(IEventHandler):
@@ -127,20 +128,20 @@ class TransactionEventHandler(IEventHandler):
 
         (
             system,
-            organizer_referee,
-            buyer_referee,
+            organizer_referrer,
+            buyer_referrer,
         ) = await asyncio.gather(
             user_service.get_system_user_id(),
-            user_service.get_referral_info(organizer),  # organizer referee
-            user_service.get_referral_info(str(txn.user_id)),  # buyer referee
+            user_service.get_referral_info(organizer),  # organizer referrer
+            user_service.get_referral_info(str(txn.user_id)),  # buyer referrer
         )
 
         logger.debug(
-            "Organizer: %s \nSystem: %s \nBuyer Referee: %s \nOrganizer Referee %s",
+            "Organizer: %s \nSystem: %s \nBuyer Referrer: %s \nOrganizer Referrer %s",
             organizer,
             system,
-            buyer_referee,
-            organizer_referee,
+            buyer_referrer,
+            organizer_referrer,
         )
 
         # Convert to Decimal with proper handling
@@ -162,11 +163,12 @@ class TransactionEventHandler(IEventHandler):
                 amount=amount_paid - fee,
                 recipient_user=UUID(organizer),
                 transaction_type="sale",
+                role="organizer",
             )
         )
 
         # Handle referral commissions if applicable
-        if buyer_referee or organizer_referee:
+        if buyer_referrer or organizer_referrer:
             # Calculate referral share
             referral_share = ((fee * REFERRAL_PERCENTAGE) / 100).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
@@ -175,7 +177,7 @@ class TransactionEventHandler(IEventHandler):
             # Reduce platform fee by referral amount
             fee = fee - referral_share
 
-            if buyer_referee and organizer_referee:
+            if buyer_referrer and organizer_referrer:
                 # Split referral commission between both referees
                 half_share = (referral_share / 2).quantize(
                     Decimal("0.01"), rounding=ROUND_HALF_UP
@@ -183,24 +185,27 @@ class TransactionEventHandler(IEventHandler):
                 txn.add_settlement(
                     SettlementData(
                         amount=half_share,
-                        recipient_user=UUID(buyer_referee),
+                        recipient_user=UUID(buyer_referrer),
                         transaction_type="commission",
+                        role="referrer",
                     )
                 )
                 txn.add_settlement(
                     SettlementData(
                         amount=half_share,
-                        recipient_user=UUID(organizer_referee),
+                        recipient_user=UUID(organizer_referrer),
                         transaction_type="commission",
+                        role="referrer",
                     )
                 )
-            elif buyer_referee:
+            elif buyer_referrer:
                 # Full referral commission to buyer's referee
                 txn.add_settlement(
                     SettlementData(
                         amount=referral_share,
-                        recipient_user=UUID(buyer_referee),
+                        recipient_user=UUID(buyer_referrer),
                         transaction_type="commission",
+                        role="referrer",
                     )
                 )
             else:  # organizer_referee only
@@ -208,8 +213,9 @@ class TransactionEventHandler(IEventHandler):
                 txn.add_settlement(
                     SettlementData(
                         amount=referral_share,
-                        recipient_user=UUID(organizer_referee),
+                        recipient_user=UUID(organizer_referrer),
                         transaction_type="commission",
+                        role="referrer",
                     )
                 )
 
@@ -219,12 +225,13 @@ class TransactionEventHandler(IEventHandler):
                 amount=fee,
                 recipient_user=UUID(system),
                 transaction_type="commission",
+                role="system_admin",
             )
         )
 
         settlement_transactions = txn.create_settlement_transactions()
 
-        txn.settlement_status = "completed"
+        txn.complete_settlement()
 
         # Persist the updated transaction
         await txn_repo.save(txn)

@@ -3,7 +3,7 @@ import json
 from typing import Type, Callable, Dict, List, Any, cast
 import logging
 
-from aiokafka import AIOKafkaConsumer, AIOKafkaProducer, ConsumerRecord  # type: ignore
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer, ConsumerRecord, TopicPartition  # type: ignore
 
 from app.domain.events.base import DomainEvent
 from app.domain.events.registry import EventRegistry
@@ -163,6 +163,16 @@ class KafkaEventBus(IEventBus):
         # Store the task so we can cancel it later during shutdown
         self._consume_task = asyncio.create_task(consume_loop())
 
+    async def _commit(self, message: ConsumerRecord):
+        if self._consumer is None:
+            raise RuntimeError("Consumer not initialized")
+
+        tp = TopicPartition(message.topic, message.partition)
+        await self._consumer.commit({tp: message.offset + 1})
+        logger.debug(
+            f"Successfully processed and committed message from {message.topic}[{message.partition}] offset {message.offset}"
+        )
+
     async def _handle_message(self, message: ConsumerRecord):
         """Handle incoming Kafka message"""
         try:
@@ -186,8 +196,11 @@ class KafkaEventBus(IEventBus):
             if not event_type:
                 logger.warning(f"Event type is empty for event")
                 return
-
-            event_class = EventRegistry.get_event_class(event_type)
+            try:
+                event_class = EventRegistry.get_event_class(event_type)
+            except KeyError:
+                await self._commit(message)
+                return
 
             logger.debug(f"Event class is: {event_class.__name__}")
 
@@ -196,30 +209,15 @@ class KafkaEventBus(IEventBus):
 
             # Call all handlers for this event type
             for handler in self._handlers[topic]:
-                try:
-                    # Pass the event data to the handler
-                    if asyncio.iscoroutinefunction(handler):
-                        await handler(event_payload)
-                    else:
-                        handler(event_payload)
+                # Pass the event data to the handler
+                if asyncio.iscoroutinefunction(handler):
+                    await handler(event_payload)
+                else:
+                    handler(event_payload)
 
-                    logger.debug(
-                        f"Successfully handled event {event_payload.event_type}"
-                    )
+                logger.debug(f"Successfully handled event {event_payload.event_type}")
 
-                    if self._consumer is None:
-                        raise RuntimeError("Consumer not initialized")
-
-                    await self._consumer.commit()
-                    logger.debug(
-                        f"Successfully processed and committed message from {message.topic}[{message.partition}] offset {message.offset}"
-                    )
-
-                except Exception as e:
-                    logger.error(
-                        f"Handler failed for event {event_payload.event_type}: {e}"
-                    )
-                    # Continue with other handlers even if one fails
+            await self._commit(message)
 
         except Exception as e:
             logger.error(f"Failed to process message from topic {message.topic}: {e}")

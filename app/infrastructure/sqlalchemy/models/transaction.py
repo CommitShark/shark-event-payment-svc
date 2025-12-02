@@ -12,10 +12,9 @@ from sqlalchemy import (
 )
 
 from uuid import UUID as PyUUID
-
-from app.domain.entities import (
+from app.domain.entities import Transaction
+from app.domain.entities.value_objects import (
     TransactionDirection,
-    Transaction,
     TransactionSettlementStatus,
     TransactionSource,
     TransactionType,

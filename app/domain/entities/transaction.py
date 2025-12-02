@@ -2,53 +2,19 @@ from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Optional, Literal, Any
+from typing import Optional, Any
 
 from app.shared.errors import AppError
 from ..events import TransactionCreatedEvent, PurchaseSettledEvent
 from ..events.base import DomainEvent
-
-TransactionSettlementStatus = Literal[
-    "pending",
-    "failed",
-    "completed",
-    "not_applicable",
-]
-TransactionType = Literal[
-    "purchase",
-    "wallet_funding",
-    "sale",
-    "commission",
-    "withdrawal",
-]
-TransactionDirection = Literal["credit", "debit"]
-TransactionSource = Literal["wallet", "payment_provider"]
-
-
-class ChargeData(BaseModel):
-    charge_setting_id: str
-    version_id: str
-    version_number: int
-    charge_amount: Decimal = Field(gt=0)
-    sponsored: bool
-
-    model_config = {
-        "json_encoders": {
-            Decimal: lambda v: format(v, "f"),
-        }
-    }
-
-
-class SettlementData(BaseModel):
-    amount: Decimal = Field(gt=0)
-    recipient_user: UUID
-    transaction_type: TransactionType
-
-    model_config = {
-        "json_encoders": {
-            Decimal: lambda v: format(v, "f"),
-        }
-    }
+from .value_objects import (
+    TransactionDirection,
+    TransactionSettlementStatus,
+    TransactionSource,
+    TransactionType,
+    ChargeData,
+    SettlementData,
+)
 
 
 # === Entity ===

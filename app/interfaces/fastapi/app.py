@@ -23,7 +23,7 @@ from app.infrastructure.grpc import ticketing_pb2_grpc, grpc_client
 from app.infrastructure.ports import PaystackAdapter
 from app.utils.external_api_client import ExternalAPIClient
 from app.application.event_handlers import TransactionEventHandler
-from .endpoints.v1 import charges, checkout
+from .endpoints.v1 import charges, checkout, wallet
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -118,6 +118,7 @@ def create_app() -> FastAPI:
 
     app.include_router(charges.router)
     app.include_router(checkout.router)
+    app.include_router(wallet.router)
 
     logger.info(
         "FastAPI application created with root path: %s",

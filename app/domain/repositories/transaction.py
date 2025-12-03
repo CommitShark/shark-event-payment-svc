@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Protocol, List
 from uuid import UUID
 from abc import abstractmethod
 
@@ -15,3 +15,11 @@ class ITransactionRepository(Protocol):
         reference: UUID,
         lock_for_update: bool = False,
     ) -> Transaction | None: ...
+
+    @abstractmethod
+    async def query_by_user(
+        self,
+        offset: int,
+        limit: int,
+        user_id: UUID,
+    ) -> tuple[List[Transaction], int]: ...

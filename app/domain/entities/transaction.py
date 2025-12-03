@@ -47,6 +47,35 @@ class Transaction(BaseModel):
     }
 
     @property
+    def description(self):
+        # --- PURCHASES ---
+        if self.transaction_type == "purchase":
+            return f"Purchase made for {self.resource}"
+
+        # --- SALES (money received for delivering a resource) ---
+        if self.transaction_type == "sale":
+            return f"Payment received for {self.resource} sale"
+
+        # --- COMMISSIONS ---
+        if self.transaction_type == "commission":
+            return f"Commission received for {self.resource}"
+
+        # --- WALLET FUNDING ---
+        if self.transaction_type == "wallet_funding":
+            if self.source == "payment_provider":
+                return "Wallet funded via payment provider"
+            if self.source == "wallet":
+                return "Wallet-to-wallet transfer received"
+            return "Wallet funded"
+
+        # --- WITHDRAWALS ---
+        if self.transaction_type == "withdrawal":
+            return "Withdrawal from wallet balance"
+
+        # --- FALLBACK ---
+        return "Transaction"
+
+    @property
     def events(self):
         events_ = list(self._events)
         self._events.clear()
@@ -106,7 +135,7 @@ class Transaction(BaseModel):
                 "purchase": "debit",
                 "wallet_funding": "credit",
                 "sale": "credit",
-                "commission": "debit",
+                "commission": "credit",
             }
             transaction_direction = direction_map[transaction_type]
 

@@ -20,6 +20,7 @@ from app.application.use_cases import (
     RequestChargeUseCase,
     CreateCheckoutUseCase,
     VerifyTicketPurchaseTransactionUseCase,
+    ListUserTransactionUseCase,
 )
 from app.infrastructure.grpc import grpc_client
 
@@ -143,4 +144,15 @@ def get_VerifyTicketPurchaseTransactionUseCase(
 VerifyTicketPurchaseTransactionUseCaseDep = Annotated[
     VerifyTicketPurchaseTransactionUseCase,
     Depends(get_VerifyTicketPurchaseTransactionUseCase),
+]
+
+
+def get_ListUserTransactionUseCase(txn_repo: TxnRepoDep):
+    return ListUserTransactionUseCase(
+        txn_repo=txn_repo,
+    )
+
+
+ListUserTransactionUseCaseDep = Annotated[
+    ListUserTransactionUseCase, Depends(get_ListUserTransactionUseCase)
 ]

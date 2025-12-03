@@ -9,6 +9,7 @@ from app.domain.events.base import DomainEvent
 from app.domain.events.registry import EventRegistry
 from app.domain.ports import IEventBus
 from app.config import kafka_config
+from app.shared.errors import AppError
 
 logger = logging.getLogger(__name__)
 logging.getLogger("aiokafka").setLevel(logging.CRITICAL)
@@ -218,6 +219,11 @@ class KafkaEventBus(IEventBus):
                 logger.debug(f"Successfully handled event {event_payload.event_type}")
 
             await self._commit(message)
+
+        except AppError as e:
+            logger.error(
+                f"Failed to process message from topic {message.topic}: {e.message}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to process message from topic {message.topic}: {e}")

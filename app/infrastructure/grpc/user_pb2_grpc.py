@@ -55,6 +55,12 @@ class GrpcUserServiceStub(object):
             response_deserializer=user__pb2.GetReferralInfoResponse.FromString,
             _registered_method=True,
         )
+        self.GetUserContactInfo = channel.unary_unary(
+            "/user.GrpcUserService/GetUserContactInfo",
+            request_serializer=user__pb2.GetUserContactInfoRequest.SerializeToString,
+            response_deserializer=user__pb2.GetUserContactInfoResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class GrpcUserServiceServicer(object):
@@ -78,6 +84,12 @@ class GrpcUserServiceServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def GetUserContactInfo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_GrpcUserServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -95,6 +107,11 @@ def add_GrpcUserServiceServicer_to_server(servicer, server):
             servicer.GetReferralInfo,
             request_deserializer=user__pb2.GetReferralInfoRequest.FromString,
             response_serializer=user__pb2.GetReferralInfoResponse.SerializeToString,
+        ),
+        "GetUserContactInfo": grpc.unary_unary_rpc_method_handler(
+            servicer.GetUserContactInfo,
+            request_deserializer=user__pb2.GetUserContactInfoRequest.FromString,
+            response_serializer=user__pb2.GetUserContactInfoResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -187,6 +204,36 @@ class GrpcUserService(object):
             "/user.GrpcUserService/GetReferralInfo",
             user__pb2.GetReferralInfoRequest.SerializeToString,
             user__pb2.GetReferralInfoResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetUserContactInfo(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/user.GrpcUserService/GetUserContactInfo",
+            user__pb2.GetUserContactInfoRequest.SerializeToString,
+            user__pb2.GetUserContactInfoResponse.FromString,
             options,
             channel_credentials,
             insecure,

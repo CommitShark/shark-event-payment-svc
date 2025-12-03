@@ -4,6 +4,24 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class GetUserContactInfoRequest(_message.Message):
+    __slots__ = ("user_auth_id",)
+    USER_AUTH_ID_FIELD_NUMBER: _ClassVar[int]
+    user_auth_id: str
+    def __init__(self, user_auth_id: _Optional[str] = ...) -> None: ...
+
+class GetUserContactInfoResponse(_message.Message):
+    __slots__ = ("error", "email", "phone", "device")
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    EMAIL_FIELD_NUMBER: _ClassVar[int]
+    PHONE_FIELD_NUMBER: _ClassVar[int]
+    DEVICE_FIELD_NUMBER: _ClassVar[int]
+    error: str
+    email: str
+    phone: str
+    device: str
+    def __init__(self, error: _Optional[str] = ..., email: _Optional[str] = ..., phone: _Optional[str] = ..., device: _Optional[str] = ...) -> None: ...
+
 class GetEventOrganizerRequest(_message.Message):
     __slots__ = ("slug",)
     SLUG_FIELD_NUMBER: _ClassVar[int]

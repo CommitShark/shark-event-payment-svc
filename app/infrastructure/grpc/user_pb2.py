@@ -24,25 +24,29 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nuser.proto\x12\x04user\"(\n\x18GetEventOrganizerRequest\x12\x0c\n\x04slug\x18\x01 \x01(\t\"J\n\x19GetEventOrganizerResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x0f\n\x07user_id\x18\x02 \x01(\tB\x08\n\x06_error\"\x16\n\x14GetSystemUserRequest\"F\n\x15GetSystemUserResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x0f\n\x07user_id\x18\x02 \x01(\tB\x08\n\x06_error\")\n\x16GetReferralInfoRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\"Y\n\x17GetReferralInfoResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x14\n\x07user_id\x18\x02 \x01(\tH\x01\x88\x01\x01\x42\x08\n\x06_errorB\n\n\x08_user_id2\x81\x02\n\x0fGrpcUserService\x12T\n\x11GetEventOrganizer\x12\x1e.user.GetEventOrganizerRequest\x1a\x1f.user.GetEventOrganizerResponse\x12H\n\rGetSystemUser\x12\x1a.user.GetSystemUserRequest\x1a\x1b.user.GetSystemUserResponse\x12N\n\x0fGetReferralInfo\x12\x1c.user.GetReferralInfoRequest\x1a\x1d.user.GetReferralInfoResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nuser.proto\x12\x04user\"1\n\x19GetUserContactInfoRequest\x12\x14\n\x0cuser_auth_id\x18\x01 \x01(\t\"\x87\x01\n\x1aGetUserContactInfoResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\r\n\x05\x65mail\x18\x02 \x01(\t\x12\x12\n\x05phone\x18\x03 \x01(\tH\x01\x88\x01\x01\x12\x13\n\x06\x64\x65vice\x18\x04 \x01(\tH\x02\x88\x01\x01\x42\x08\n\x06_errorB\x08\n\x06_phoneB\t\n\x07_device\"(\n\x18GetEventOrganizerRequest\x12\x0c\n\x04slug\x18\x01 \x01(\t\"J\n\x19GetEventOrganizerResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x0f\n\x07user_id\x18\x02 \x01(\tB\x08\n\x06_error\"\x16\n\x14GetSystemUserRequest\"F\n\x15GetSystemUserResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x0f\n\x07user_id\x18\x02 \x01(\tB\x08\n\x06_error\")\n\x16GetReferralInfoRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\"Y\n\x17GetReferralInfoResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x14\n\x07user_id\x18\x02 \x01(\tH\x01\x88\x01\x01\x42\x08\n\x06_errorB\n\n\x08_user_id2\xda\x02\n\x0fGrpcUserService\x12T\n\x11GetEventOrganizer\x12\x1e.user.GetEventOrganizerRequest\x1a\x1f.user.GetEventOrganizerResponse\x12H\n\rGetSystemUser\x12\x1a.user.GetSystemUserRequest\x1a\x1b.user.GetSystemUserResponse\x12N\n\x0fGetReferralInfo\x12\x1c.user.GetReferralInfoRequest\x1a\x1d.user.GetReferralInfoResponse\x12W\n\x12GetUserContactInfo\x12\x1f.user.GetUserContactInfoRequest\x1a .user.GetUserContactInfoResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'user_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_GETEVENTORGANIZERREQUEST']._serialized_start=20
-  _globals['_GETEVENTORGANIZERREQUEST']._serialized_end=60
-  _globals['_GETEVENTORGANIZERRESPONSE']._serialized_start=62
-  _globals['_GETEVENTORGANIZERRESPONSE']._serialized_end=136
-  _globals['_GETSYSTEMUSERREQUEST']._serialized_start=138
-  _globals['_GETSYSTEMUSERREQUEST']._serialized_end=160
-  _globals['_GETSYSTEMUSERRESPONSE']._serialized_start=162
-  _globals['_GETSYSTEMUSERRESPONSE']._serialized_end=232
-  _globals['_GETREFERRALINFOREQUEST']._serialized_start=234
-  _globals['_GETREFERRALINFOREQUEST']._serialized_end=275
-  _globals['_GETREFERRALINFORESPONSE']._serialized_start=277
-  _globals['_GETREFERRALINFORESPONSE']._serialized_end=366
-  _globals['_GRPCUSERSERVICE']._serialized_start=369
-  _globals['_GRPCUSERSERVICE']._serialized_end=626
+  _globals['_GETUSERCONTACTINFOREQUEST']._serialized_start=20
+  _globals['_GETUSERCONTACTINFOREQUEST']._serialized_end=69
+  _globals['_GETUSERCONTACTINFORESPONSE']._serialized_start=72
+  _globals['_GETUSERCONTACTINFORESPONSE']._serialized_end=207
+  _globals['_GETEVENTORGANIZERREQUEST']._serialized_start=209
+  _globals['_GETEVENTORGANIZERREQUEST']._serialized_end=249
+  _globals['_GETEVENTORGANIZERRESPONSE']._serialized_start=251
+  _globals['_GETEVENTORGANIZERRESPONSE']._serialized_end=325
+  _globals['_GETSYSTEMUSERREQUEST']._serialized_start=327
+  _globals['_GETSYSTEMUSERREQUEST']._serialized_end=349
+  _globals['_GETSYSTEMUSERRESPONSE']._serialized_start=351
+  _globals['_GETSYSTEMUSERRESPONSE']._serialized_end=421
+  _globals['_GETREFERRALINFOREQUEST']._serialized_start=423
+  _globals['_GETREFERRALINFOREQUEST']._serialized_end=464
+  _globals['_GETREFERRALINFORESPONSE']._serialized_start=466
+  _globals['_GETREFERRALINFORESPONSE']._serialized_end=555
+  _globals['_GRPCUSERSERVICE']._serialized_start=558
+  _globals['_GRPCUSERSERVICE']._serialized_end=904
 # @@protoc_insertion_point(module_scope)

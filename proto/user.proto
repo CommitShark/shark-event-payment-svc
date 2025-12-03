@@ -6,6 +6,18 @@ service GrpcUserService {
   rpc GetEventOrganizer(GetEventOrganizerRequest) returns (GetEventOrganizerResponse);
   rpc GetSystemUser(GetSystemUserRequest) returns (GetSystemUserResponse);
   rpc GetReferralInfo(GetReferralInfoRequest) returns (GetReferralInfoResponse);
+  rpc GetUserContactInfo(GetUserContactInfoRequest) returns (GetUserContactInfoResponse);
+}
+
+message GetUserContactInfoRequest {
+  string user_auth_id = 1;
+}
+
+message GetUserContactInfoResponse {
+  optional string error = 1;
+  string email = 2;
+  optional string phone = 3;
+  optional string device = 4;
 }
 
 message GetEventOrganizerRequest {

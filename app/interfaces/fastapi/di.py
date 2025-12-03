@@ -7,11 +7,13 @@ from app.domain.repositories import (
     IChargeSettingRepository,
     IChargeSettingVersionRepository,
     ITransactionRepository,
+    IWalletRepository,
 )
 from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyChargeSettingRepository,
     SqlAlchemyChargeSettingVersionRepository,
     SqlAlchemyTransactionRepository,
+    SqlAlchemyWalletRepository,
 )
 from app.domain.ports import IPaymentAdapter, IEventBus
 from app.infrastructure.ports import GrpcTicketService
@@ -21,6 +23,7 @@ from app.application.use_cases import (
     CreateCheckoutUseCase,
     VerifyTicketPurchaseTransactionUseCase,
     ListUserTransactionUseCase,
+    GetBalanceUseCase,
 )
 from app.infrastructure.grpc import grpc_client
 
@@ -55,6 +58,13 @@ def get_payment_adapter(
 
 
 PaymentAdapterDep = Annotated[IPaymentAdapter, Depends(get_payment_adapter)]
+
+
+def get_WalletRepoDep(session: DbSession) -> IWalletRepository:
+    return SqlAlchemyWalletRepository(session)
+
+
+WalletRepoDep = Annotated[IWalletRepository, Depends(get_WalletRepoDep)]
 
 
 def get_ITransactionRepository(
@@ -156,3 +166,10 @@ def get_ListUserTransactionUseCase(txn_repo: TxnRepoDep):
 ListUserTransactionUseCaseDep = Annotated[
     ListUserTransactionUseCase, Depends(get_ListUserTransactionUseCase)
 ]
+
+
+def get_GetBalanceUseCase(wallet_repo: WalletRepoDep):
+    return GetBalanceUseCase(wallet_repo)
+
+
+GetBalanceUseCaseDep = Annotated[GetBalanceUseCase, Depends(get_GetBalanceUseCase)]

@@ -10,6 +10,11 @@ from app.domain.entities.value_objects import (
 from .base import PaginatedReqDto, PaginatedResponseDto
 
 
+class BalanceDto(BaseModel):
+    available: Decimal
+    pending: Decimal
+
+
 class TransactionDto(BaseModel):
     id: UUID
     amount: Decimal

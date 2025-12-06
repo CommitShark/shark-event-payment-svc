@@ -2,6 +2,9 @@ from pydantic import BaseModel, Field
 from decimal import Decimal
 from uuid import UUID, uuid4
 from typing import Optional
+from datetime import datetime, timezone
+
+from .value_objects import BankDetails
 
 
 class Wallet(BaseModel):
@@ -10,6 +13,7 @@ class Wallet(BaseModel):
     balance: Decimal = Field(ge=0, default=Decimal(0))
     pending_balance: Decimal = Field(ge=0, default=Decimal(0))
     txn_pin: Optional[str] = None
+    bank_details: Optional[BankDetails] = None
 
     model_config = {
         "validate_assignment": True,
@@ -18,6 +22,18 @@ class Wallet(BaseModel):
             Decimal: lambda v: format(v, "f"),
         },
     }
+
+    @property
+    def has_pin(self):
+        return self.txn_pin is not None
+
+    def set_bank_details(self, bank: str, name: str, number: str):
+        self.bank_details = BankDetails(
+            account_name=name,
+            account_number=number,
+            bank=bank,
+            updated_at=datetime.now(timezone.utc),
+        )
 
     def can_withdraw(self, amount: Decimal) -> bool:
         return self.balance >= amount

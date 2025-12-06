@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 from decimal import Decimal
 from typing import Literal
+from datetime import datetime
 
 
 TransactionSettlementStatus = Literal[
@@ -46,3 +47,10 @@ class SettlementData(BaseModel):
             Decimal: lambda v: format(v, "f"),
         }
     }
+
+
+class BankDetails(BaseModel):
+    account_name: str
+    account_number: str
+    bank: str
+    updated_at: datetime

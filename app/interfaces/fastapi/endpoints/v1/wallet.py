@@ -1,11 +1,18 @@
 from fastapi import APIRouter, Query
 
+from app.application.dto.base import BaseResponseDTO
 from app.application.dto.wallet import (
     ListUserTransactionRequestDto,
     ListUserTransactionResponseDto,
     BalanceDto,
+    UpdateTransactionPinRequestDto,
 )
-from ...di import ListUserTransactionUseCaseDep, GetBalanceUseCaseDep
+from app.application.mappers.wallet import wallet_to_dto
+from ...di import (
+    ListUserTransactionUseCaseDep,
+    GetBalanceUseCaseDep,
+    SetTransactionPinUseCaseDep,
+)
 from ...context import UserContextDep
 
 router = APIRouter(prefix="/v1/wallet", tags=["Wallet"])
@@ -17,10 +24,7 @@ async def get_wallet_balance(
     use_case: GetBalanceUseCaseDep,
 ):
     wallet = await use_case.execute(context.user_id)
-    return BalanceDto(
-        available=wallet.balance,
-        pending=wallet.pending_balance,
-    )
+    return wallet_to_dto(wallet)
 
 
 @router.get("/transactions", response_model=ListUserTransactionResponseDto)
@@ -40,3 +44,16 @@ async def get_transactions(
     result = await use_case.execute(req)
 
     return ListUserTransactionResponseDto(**result.model_dump())
+
+
+@router.post(
+    "/update-transaction-pin",
+    response_model=BaseResponseDTO,
+)
+async def update_transaction_pin(
+    use_case: SetTransactionPinUseCaseDep,
+    req: UpdateTransactionPinRequestDto,
+    context: UserContextDep,
+):
+    await use_case.execute(context.user_id, req.pin, req.old_pin)
+    return BaseResponseDTO(success=True)

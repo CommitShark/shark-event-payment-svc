@@ -24,6 +24,7 @@ from app.application.use_cases import (
     VerifyTicketPurchaseTransactionUseCase,
     ListUserTransactionUseCase,
     GetBalanceUseCase,
+    SetTransactionPinUseCase,
 )
 from app.infrastructure.grpc import grpc_client
 
@@ -173,3 +174,13 @@ def get_GetBalanceUseCase(wallet_repo: WalletRepoDep):
 
 
 GetBalanceUseCaseDep = Annotated[GetBalanceUseCase, Depends(get_GetBalanceUseCase)]
+
+
+def get_SetTransactionPinUseCase(wallet_repo: WalletRepoDep):
+    return SetTransactionPinUseCase(wallet_repo)
+
+
+SetTransactionPinUseCaseDep = Annotated[
+    SetTransactionPinUseCase,
+    Depends(get_SetTransactionPinUseCase),
+]

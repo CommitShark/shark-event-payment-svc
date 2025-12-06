@@ -3,6 +3,8 @@ from decimal import Decimal
 from uuid import UUID, uuid4
 from typing import Optional
 from datetime import datetime, timezone
+from app.shared.errors import AppError, ErrorCodes
+import bcrypt  # type: ignore
 
 from .value_objects import BankDetails
 
@@ -13,6 +15,7 @@ class Wallet(BaseModel):
     balance: Decimal = Field(ge=0, default=Decimal(0))
     pending_balance: Decimal = Field(ge=0, default=Decimal(0))
     txn_pin: Optional[str] = None
+    pin_updated_at: Optional[datetime] = None
     bank_details: Optional[BankDetails] = None
 
     model_config = {
@@ -74,11 +77,31 @@ class Wallet(BaseModel):
         self.balance += amount
 
     def set_pin(self, pin: str):
-        """Assign transaction PIN."""
-        if len(pin) < 4:
-            raise ValueError("PIN must be at least 4 digits")
-        self.txn_pin = pin
+        """Hash and store transaction PIN."""
+
+        if len(pin) != 4:
+            raise ValueError("PIN must be 4 digits long")
+
+        # Hash the PIN
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(pin.encode("utf-8"), salt)
+
+        self.txn_pin = hashed.decode("utf-8")
+        self.pin_updated_at = datetime.now(timezone.utc)
 
     def verify_pin(self, pin: str) -> bool:
-        """Verify transaction PIN."""
-        return self.txn_pin == pin
+        """Check if the provided PIN matches the stored hash."""
+        if not self.txn_pin:
+            return False
+
+        return bcrypt.checkpw(pin.encode("utf-8"), self.txn_pin.encode("utf-8"))
+
+    def change_pin(self, old_pin: str, new_pin: str):
+        if not self.verify_pin(old_pin):
+            raise AppError(
+                "Incorrect transaction pin",
+                400,
+                error_code=ErrorCodes.INVALID_TXN_PIN,
+            )
+
+        self.set_pin(new_pin)

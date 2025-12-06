@@ -4,7 +4,7 @@ from app.application.dto.wallet import (
     TransactionDto,
 )
 from app.application.dto.base import PaginatedResponseDto
-from app.application.mappers.transaction import transaction_to_dto
+from app.application.mappers.wallet import transaction_to_dto
 
 
 class ListUserTransactionUseCase:

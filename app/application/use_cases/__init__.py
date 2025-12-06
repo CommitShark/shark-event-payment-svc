@@ -3,6 +3,7 @@ from .create_checkout import CreateCheckoutUseCase
 from .verify_transaction import VerifyTicketPurchaseTransactionUseCase
 from .list_transactions import ListUserTransactionUseCase
 from .get_balance import GetBalanceUseCase
+from .set_transaction_pin import SetTransactionPinUseCase
 
 __all__ = [
     "RequestChargeUseCase",
@@ -10,4 +11,5 @@ __all__ = [
     "VerifyTicketPurchaseTransactionUseCase",
     "ListUserTransactionUseCase",
     "GetBalanceUseCase",
+    "SetTransactionPinUseCase",
 ]

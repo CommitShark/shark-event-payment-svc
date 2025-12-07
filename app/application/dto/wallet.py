@@ -4,6 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 from typing import Optional
 
+from app.domain.dto import PersonalAccountWithSignature
 from app.domain.entities.value_objects import (
     TransactionDirection,
     TransactionSettlementStatus,
@@ -41,3 +42,7 @@ class ListUserTransactionRequestDto(PaginatedReqDto):
 
 class ListUserTransactionResponseDto(PaginatedResponseDto[TransactionDto]):
     pass
+
+
+class SaveBankReqDto(PersonalAccountWithSignature):
+    pin: str

@@ -2,7 +2,7 @@ from typing import Protocol, Optional
 from decimal import Decimal
 from abc import abstractmethod
 
-from ..dto import ExternalTransaction
+from ..dto import ExternalTransaction, PersonalAccount, BankItem
 
 
 class IPaymentAdapter(Protocol):
@@ -18,3 +18,11 @@ class IPaymentAdapter(Protocol):
 
     @abstractmethod
     async def get_valid_transaction(self, reference: str) -> ExternalTransaction: ...
+
+    @abstractmethod
+    async def resolve_personal_bank(
+        self, bank: str, account: str
+    ) -> PersonalAccount: ...
+
+    @abstractmethod
+    async def list_banks(self) -> list[BankItem]: ...

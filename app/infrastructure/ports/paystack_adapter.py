@@ -6,17 +6,27 @@ from decimal import Decimal
 from pydantic import BaseModel, ValidationError
 from datetime import datetime
 from uuid import UUID
+from typing import TypeVar, Generic
+
+from app.config import settings
 from app.domain.ports import IPaymentAdapter
 from app.shared.errors import AppError, ErrorCodes
 from app.utils.external_api_client import ExternalAPIClient
-from app.domain.dto import ExternalTransaction
+from app.domain.dto import BankItem, ExternalTransaction, PersonalAccount
 
+
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
 
 class BaseResDto(BaseModel):
     status: bool
+
+
+class BaseResWithDataDto(BaseModel, Generic[T]):
+    status: bool
+    data: T
 
 
 class InitiateTransactionResDataDto(BaseModel):
@@ -46,12 +56,67 @@ class VerifyTransactionResDto(BaseResDto):
     data: VerifyTransactionResDataDto
 
 
+class PaystackPersonalAccountResDto(BaseModel):
+    account_number: str
+    account_name: str
+
+
 class PaystackAdapter(IPaymentAdapter):
     def __init__(
         self,
         client: ExternalAPIClient,
     ) -> None:
         self._client = client
+
+    async def resolve_personal_bank(
+        self,
+        bank: str,
+        account: str,
+    ) -> PersonalAccount:
+        response = await self._client._get(
+            endpoint="/bank/resolve",
+            params={
+                "account_number": account,
+                "bank_code": bank,
+            },
+        )
+
+        try:
+            parsed_res = BaseResWithDataDto[PaystackPersonalAccountResDto](**response)
+        except ValidationError as e:
+            print(
+                "Pydantic validation error while parsing VerifyTransactionResDto: %s",
+                e.json(),
+            )
+            raise AppError(
+                "Could not process payment, try again later",
+                500,
+                error_code=ErrorCodes.DATA_VALIDATION_ERROR,
+            )
+        except Exception as e:
+            logger.error(
+                "Unexpected error while parsing BaseResWithDataDto[PaystackPersonalAccountResDto]\nError: %s\nTraceback:\n%s",
+                str(e),
+                traceback.format_exc(),
+            )
+            raise AppError(
+                "Could not resolve account, try again later",
+                500,
+                error_code=ErrorCodes.DATA_VALIDATION_ERROR,
+            )
+
+        banks = await self.list_banks()
+        selected_bank = next((b for b in banks if b.code == bank), None)
+
+        if not selected_bank:
+            raise AppError("Bank could not be resolved.", 500)
+
+        return PersonalAccount(
+            account_name=parsed_res.data.account_name,
+            account_number=parsed_res.data.account_number,
+            bank_code=bank,
+            bank_name=selected_bank.name,
+        )
 
     async def get_valid_transaction(
         self,
@@ -129,3 +194,32 @@ class PaystackAdapter(IPaymentAdapter):
             raise AppError("Could not process payment, try again later", 500)
 
         return parsed_res.data.authorization_url
+
+    async def list_banks(self) -> list[BankItem]:
+        response = await self._client._get(
+            endpoint="/bank",
+            params={
+                "country": "nigeria",
+                "perPage": 100,
+            },
+        )
+
+        try:
+            parsed_res = BaseResWithDataDto[list[BankItem]](**response)
+        except Exception:
+            raise AppError("Could not process banks list, try again later", 500)
+
+        if not parsed_res.status:
+            raise AppError("Could not process bank list, try again later", 500)
+
+        result = parsed_res.data
+
+        if settings.debug:
+            result.append(
+                BankItem(
+                    code="001",
+                    name="Test Bank",
+                )
+            )
+
+        return result

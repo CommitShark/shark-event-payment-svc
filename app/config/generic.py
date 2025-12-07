@@ -9,6 +9,8 @@ class GenericSettings(BaseSettings):
 
     charge_req_key: str
 
+    account_validation_key: str
+
     debug: bool
 
 

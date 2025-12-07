@@ -30,11 +30,18 @@ class Wallet(BaseModel):
     def has_pin(self):
         return self.txn_pin is not None
 
-    def set_bank_details(self, bank: str, name: str, number: str):
+    def set_bank_details(
+        self,
+        bank_name: str,
+        name: str,
+        number: str,
+        bank_code: str,
+    ):
         self.bank_details = BankDetails(
             account_name=name,
             account_number=number,
-            bank=bank,
+            bank_name=bank_name,
+            bank_code=bank_code,
             updated_at=datetime.now(timezone.utc),
         )
 

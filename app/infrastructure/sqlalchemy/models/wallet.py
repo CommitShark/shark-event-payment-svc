@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Optional
 from sqlalchemy import (
     UUID,
-    String,
+    Text,
     Numeric,
     JSON,
 )
@@ -39,7 +39,7 @@ class SqlAlchemyWallet(Base):
     )
 
     txn_pin: Mapped[Optional[str]] = mapped_column(
-        String(4),
+        Text,
         nullable=True,
     )
 

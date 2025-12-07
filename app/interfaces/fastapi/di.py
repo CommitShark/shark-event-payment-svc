@@ -25,6 +25,9 @@ from app.application.use_cases import (
     ListUserTransactionUseCase,
     GetBalanceUseCase,
     SetTransactionPinUseCase,
+    ResolvePersonalAccountUseCase,
+    ListBanksUseCase,
+    SaveBankUseCase,
 )
 from app.infrastructure.grpc import grpc_client
 
@@ -184,3 +187,30 @@ SetTransactionPinUseCaseDep = Annotated[
     SetTransactionPinUseCase,
     Depends(get_SetTransactionPinUseCase),
 ]
+
+
+def get_ResolvePersonalAccountUseCase(adapter: PaymentAdapterDep):
+    return ResolvePersonalAccountUseCase(adapter)
+
+
+ResolvePersonalAccountUseCaseDep = Annotated[
+    ResolvePersonalAccountUseCase,
+    Depends(get_ResolvePersonalAccountUseCase),
+]
+
+
+def get_ListBanksUseCase(adapter: PaymentAdapterDep):
+    return ListBanksUseCase(adapter)
+
+
+ListBanksUseCaseDep = Annotated[
+    ListBanksUseCase,
+    Depends(get_ListBanksUseCase),
+]
+
+
+def get_SaveBankUseCase(wallet_repo: WalletRepoDep):
+    return SaveBankUseCase(wallet_repo)
+
+
+SaveBankUseCaseDep = Annotated[SaveBankUseCase, Depends(get_SaveBankUseCase)]

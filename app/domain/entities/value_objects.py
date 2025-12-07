@@ -52,5 +52,6 @@ class SettlementData(BaseModel):
 class BankDetails(BaseModel):
     account_name: str
     account_number: str
-    bank: str
+    bank_name: str
+    bank_code: str
     updated_at: datetime

@@ -11,3 +11,19 @@ class ExternalTransaction(BaseModel):
     occurred_on: datetime
     currency: str
     metadata: dict | None = None
+
+
+class PersonalAccount(BaseModel):
+    bank_code: str
+    bank_name: str
+    account_number: str
+    account_name: str
+
+
+class PersonalAccountWithSignature(PersonalAccount):
+    signature: str
+
+
+class BankItem(BaseModel):
+    name: str
+    code: str

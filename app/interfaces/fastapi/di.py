@@ -28,6 +28,7 @@ from app.application.use_cases import (
     ResolvePersonalAccountUseCase,
     ListBanksUseCase,
     SaveBankUseCase,
+    SubmitWithdrawalUseCase,
 )
 from app.infrastructure.grpc import grpc_client
 
@@ -214,3 +215,15 @@ def get_SaveBankUseCase(wallet_repo: WalletRepoDep):
 
 
 SaveBankUseCaseDep = Annotated[SaveBankUseCase, Depends(get_SaveBankUseCase)]
+
+
+def get_SubmitWithdrawalUseCase(
+    wallet_repo: WalletRepoDep, txn_repo: TxnRepoDep, event_bus: EventBusDep
+):
+    return SubmitWithdrawalUseCase(wallet_repo, txn_repo, event_bus)
+
+
+SubmitWithdrawalUseCaseDep = Annotated[
+    SubmitWithdrawalUseCase,
+    Depends(get_SubmitWithdrawalUseCase),
+]

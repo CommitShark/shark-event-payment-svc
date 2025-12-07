@@ -7,6 +7,7 @@ from .set_transaction_pin import SetTransactionPinUseCase
 from .resolve_personal_account import ResolvePersonalAccountUseCase
 from .list_banks import ListBanksUseCase
 from .save_bank import SaveBankUseCase
+from .submit_withdrawal import SubmitWithdrawalUseCase
 
 __all__ = [
     "RequestChargeUseCase",
@@ -18,4 +19,5 @@ __all__ = [
     "ResolvePersonalAccountUseCase",
     "ListBanksUseCase",
     "SaveBankUseCase",
+    "SubmitWithdrawalUseCase",
 ]

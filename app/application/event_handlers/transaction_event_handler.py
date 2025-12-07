@@ -24,6 +24,7 @@ from .di import (
     get_event_bus,
     get_txn_repo,
     get_wallet_repo,
+    get_IPaymentAdapter,
 )
 
 logger = logging.getLogger(__name__)
@@ -68,16 +69,18 @@ class TransactionEventHandler(IEventHandler):
                 )
                 return
 
-            if txn.transaction_type == "purchase" and txn.resource == "ticket":
-
-                await self._settle_ticket_purchase_txn(
-                    txn_repo=txn_repo,
-                    ticket_service=ticket_service,
-                    user_service=user_service,
-                    payload=payload,
-                    txn=txn,
-                    event_bus=event_bus,
-                )
+            if txn.transaction_type == "purchase":
+                if txn.resource == "ticket":
+                    await self._settle_ticket_purchase_txn(
+                        txn_repo=txn_repo,
+                        ticket_service=ticket_service,
+                        user_service=user_service,
+                        payload=payload,
+                        txn=txn,
+                        event_bus=event_bus,
+                    )
+                else:
+                    raise AppError(f"{txn} not implemented", 500)
             elif (
                 txn.transaction_type == "sale"
                 or txn.transaction_type == "commission"
@@ -88,6 +91,12 @@ class TransactionEventHandler(IEventHandler):
                     txn_repo=txn_repo,
                     wallet_repo=wallet_repo,
                     event_bus=event_bus,
+                )
+            elif txn.transaction_type == "withdrawal":
+                await self._transfer_to_external_bank(
+                    txn,
+                    txn_repo,
+                    wallet_repo,
                 )
             else:
                 raise AppError(f"{txn} not implemented", 500)
@@ -250,6 +259,44 @@ class TransactionEventHandler(IEventHandler):
             f"Created {len(txn.settlement_data)} settlements."
         )
 
+    async def _transfer_to_external_bank(
+        self,
+        txn: Transaction,
+        txn_repo: ITransactionRepository,
+        wallet_repo: IWalletRepository,
+    ):
+        payment_adapter = get_IPaymentAdapter()
+
+        logger.debug(f"Transaction: {txn.reference}: Withdraw")
+
+        wallet = await wallet_repo.get_by_user_or_create(txn.user_id)
+
+        if wallet.bank_details is None:
+            raise AppError("User is yet to configure external bank", 400)
+
+        txn.settlement_status = "processing"
+
+        # Send money to users bank
+        recipient = await payment_adapter.add_recipient(
+            account_number=wallet.bank_details.account_number,
+            account_name=wallet.bank_details.account_name,
+            bank_code=wallet.bank_details.bank_code,
+        )
+        logger.debug(f"Transaction: {txn.reference}: Recipient ID: {recipient}")
+
+        await payment_adapter.withdraw(
+            amount=txn.amount,
+            recipient_id=recipient,
+            ref=str(txn.reference),
+            reason="Wallet withdrawal",
+        )
+
+        txn.metadata = txn.metadata or {}
+        txn.metadata["recipient_id"] = recipient
+
+        # Save data
+        await txn_repo.save(txn)
+
     async def _fund_account_from_txn(
         self,
         txn: Transaction,
@@ -263,7 +310,7 @@ class TransactionEventHandler(IEventHandler):
             txn.user_id,
             lock_for_update=True,
         )
-        txn.settlement_status = "completed"
+        txn.settlement_status = "pending"
         wallet.deposit(txn.amount)
         await wallet_repo.save(wallet)
         await txn_repo.save(txn)

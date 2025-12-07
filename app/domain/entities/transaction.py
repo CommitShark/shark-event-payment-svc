@@ -136,6 +136,7 @@ class Transaction(BaseModel):
                 "wallet_funding": "credit",
                 "sale": "credit",
                 "commission": "credit",
+                "withdrawal": "debit",
             }
             transaction_direction = direction_map[transaction_type]
 

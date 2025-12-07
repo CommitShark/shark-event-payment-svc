@@ -9,6 +9,7 @@ from app.application.dto.wallet import (
     UpdateTransactionPinRequestDto,
     SaveBankReqDto,
 )
+from app.application.dto.charge_request import GetChargeResDto
 from app.application.mappers.wallet import wallet_to_dto
 from ...di import (
     ListUserTransactionUseCaseDep,
@@ -17,6 +18,7 @@ from ...di import (
     ResolvePersonalAccountUseCaseDep,
     ListBanksUseCaseDep,
     SaveBankUseCaseDep,
+    SubmitWithdrawalUseCaseDep,
 )
 from ...context import UserContextDep
 
@@ -93,5 +95,23 @@ async def update_withdrawal_bank(
     await use_case.execute(
         req=req,
         user=context.user_id,
+    )
+    return BaseResponseDTO(success=True)
+
+
+@router.post("/withdraw", response_model=BaseResponseDTO)
+async def submit_withdrawal(
+    use_case: SubmitWithdrawalUseCaseDep,
+    req: GetChargeResDto,
+    context: UserContextDep,
+):
+    await use_case.execute(
+        amount=req.base_amount,
+        calculated_charge=req.calculated_charge,
+        charge_setting_id=req.charge_setting_id,
+        signature=req.signature,
+        user_id=str(context.user_id),
+        version_id=req.version_id,
+        version_number=req.version_number,
     )
     return BaseResponseDTO(success=True)

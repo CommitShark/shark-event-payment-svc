@@ -10,6 +10,7 @@ TransactionSettlementStatus = Literal[
     "failed",
     "completed",
     "not_applicable",
+    "processing",
 ]
 TransactionType = Literal[
     "purchase",

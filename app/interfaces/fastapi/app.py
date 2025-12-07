@@ -6,11 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.config import (
-    grpc_config,
-    paystack_config,
-    kafka_config,
-)
+from app.config import grpc_config
 from app.config.http import HttpSettings
 from app.config.sqlalchemy import DatabaseSettings
 from app.shared.errors import AppError
@@ -20,8 +16,10 @@ from app.infrastructure.ports.kafka_event_bus import kafka_event_bus
 from app.domain.ports import IEventBus
 from app.domain.events.base import DomainEvent
 from app.infrastructure.grpc import ticketing_pb2_grpc, grpc_client
-from app.infrastructure.ports import PaystackAdapter
-from app.utils.external_api_client import ExternalAPIClient
+from app.infrastructure.ports.paystack_adapter import (
+    get_PaystackAdapter,
+    dispose_PaystackAdapter,
+)
 from app.application.event_handlers import TransactionEventHandler
 from .endpoints.v1 import charges, checkout, wallet
 
@@ -78,13 +76,7 @@ async def app_lifespan(app: FastAPI):
         app.state.ticket_channel
     )
 
-    paystack_client = ExternalAPIClient(
-        base_url=paystack_config.url,
-        headers={
-            "Authorization": f"Bearer {paystack_config.secret_key}",
-        },
-    )
-    app.state.paystack_adapter = PaystackAdapter(client=paystack_client)
+    app.state.paystack_adapter = get_PaystackAdapter()
 
     logger.info("Application startup complete")
 
@@ -93,7 +85,7 @@ async def app_lifespan(app: FastAPI):
     # 4. Cleanup
     await grpc_client.close_ticket_grpc_client()
     await grpc_client.close_user_grpc_client()
-    await paystack_client.close()
+    await dispose_PaystackAdapter()
     await kafka_event_bus.disconnect()
     # await permify_client.client.aclose()
     logger.info("Application shutdown complete")

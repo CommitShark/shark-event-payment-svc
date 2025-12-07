@@ -26,3 +26,20 @@ class IPaymentAdapter(Protocol):
 
     @abstractmethod
     async def list_banks(self) -> list[BankItem]: ...
+
+    @abstractmethod
+    async def withdraw(
+        self,
+        amount: Decimal,
+        recipient_id: str,
+        ref: str,
+        reason: str,
+    ): ...
+
+    @abstractmethod
+    async def add_recipient(
+        self,
+        account_number: str,
+        account_name: str,
+        bank_code: str,
+    ) -> str: ...

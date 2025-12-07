@@ -30,5 +30,38 @@
             "created_by": "system",
             "change_reason": "Seeded charge"
         }
+    },
+    {
+        "name": "Platform Withdrawal Charge (NG)",
+        "charge_type": "withdrawal_ng",
+        "init_version": {
+            "version_number": 1,
+            "tiers": [
+                {
+                    "tier_name": "Small",
+                    "min_price": "1000",
+                    "max_price": "5000",
+                    "percentage_rate": "0.35",
+                    "min_charge": "15"
+                },
+                {
+                    "tier_name": "Medium",
+                    "min_price": "5000.01",
+                    "max_price": "50000",
+                    "percentage_rate": "0.25",
+                    "min_charge": "20",
+                    "max_charge": "50"
+                },
+                {
+                    "tier_name": "Large",
+                    "min_price": "50000.01",
+                    "percentage_rate": "0.13",
+                    "min_charge": "80",
+                    "max_charge": "150"
+                }
+            ],
+            "created_by": "system",
+            "change_reason": "Seeded charge"
+        }
     }
 ]

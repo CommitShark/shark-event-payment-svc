@@ -13,4 +13,5 @@ class GetChargeResDto(BaseModel):
     version_id: str
     version_number: int
     calculated_charge: str
+    percentage_rate: str
     signature: str

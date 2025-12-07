@@ -1,3 +1,6 @@
+from decimal import Decimal
+from typing import Optional
+
 from app.config import settings
 from app.domain.repositories import IChargeSettingRepository
 from app.domain.ports import ITicketService
@@ -21,12 +24,29 @@ class RequestChargeUseCase:
         self,
         user_id: str,
         charge_type: str,
-        ticket_type_id: str,
-        slug: str,
+        ticket_type_id: Optional[str] = None,
+        slug: Optional[str] = None,
+        amount: Optional[Decimal] = None,
     ):
+        if charge_type == "ticket_purchase_ng":
+            return await self.ticket_charge(user_id, ticket_type_id, slug)
+        elif charge_type == "instant_withdrawal_ng":
+            return await self.instant_withdrawal_charge(user_id, amount)
+
+        raise AppError("Unsupported charge type requested", 400)
+
+    async def ticket_charge(
+        self,
+        user_id: str,
+        ticket_type_id: Optional[str] = None,
+        slug: Optional[str] = None,
+    ):
+        if not ticket_type_id or not slug:
+            raise AppError("Ticket type and event slug is required", 422)
+
         amount = await self._ticket_service.get_ticket_price(ticket_type_id)
 
-        charge = await self._charge_repo.get_by_type(charge_type)
+        charge = await self._charge_repo.get_by_type("ticket_purchase_ng")
 
         charge_data = await self._charge_calc_service.get_charge_breakdown(
             charge_setting_id=charge.charge_setting_id,
@@ -49,6 +69,44 @@ class RequestChargeUseCase:
             "user": user_id,
             "ticket_type": ticket_type_id,
             "slug": slug,
+        }
+
+        signature = sign_payload(payload, settings.charge_req_key)
+
+        return {
+            **charge_data,
+            "signature": signature,
+        }
+
+    async def instant_withdrawal_charge(
+        self,
+        user_id: str,
+        amount: Optional[Decimal] = None,
+    ):
+        if not amount:
+            raise AppError("Amount is required", 422)
+
+        charge = await self._charge_repo.get_by_type("instant_withdrawal_ng")
+
+        charge_data = await self._charge_calc_service.get_charge_breakdown(
+            charge_setting_id=charge.charge_setting_id,
+            base_amount=amount,
+        )
+
+        if not charge_data:
+            raise AppError(
+                "Failed to generate charge data.",
+                500,
+                error_code=ErrorCodes.COULD_NOT_GENERATE_CHARGE,
+            )
+
+        payload = {
+            "base_amount": charge_data["base_amount"],
+            "charge_setting_id": charge_data["charge_setting_id"],
+            "version_id": charge_data["version_id"],
+            "version_number": charge_data["version_number"],
+            "calculated_charge": charge_data["calculated_charge"],
+            "user": user_id,
         }
 
         signature = sign_payload(payload, settings.charge_req_key)

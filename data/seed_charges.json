@@ -33,7 +33,7 @@
     },
     {
         "name": "Platform Withdrawal Charge (NG)",
-        "charge_type": "withdrawal_ng",
+        "charge_type": "instant_withdrawal_ng",
         "init_version": {
             "version_number": 1,
             "tiers": [

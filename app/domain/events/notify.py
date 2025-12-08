@@ -97,10 +97,10 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                     subject="Withdrawal initiated",
                     html=None,
                     data={
-                        "amount": format_currency(
+                        "amount": f"{format_currency(
                             txn.amount
                             - (txn.charge_data.charge_amount if txn.charge_data else 0)
-                        ),
+                        )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
                         "reference_id": txn.reference,
                         "destination": dest,
                         "date": date,
@@ -119,10 +119,10 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                     subject="Withdrawal initiated",
                     html=None,
                     data={
-                        "amount": format_currency(
+                        "amount": f"{format_currency(
                             txn.amount
                             - (txn.charge_data.charge_amount if txn.charge_data else 0)
-                        ),
+                        )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
                         "reference_id": txn.reference,
                         "destination": dest,
                         "date": date,
@@ -133,3 +133,42 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                 ),
             ),
         ]
+
+    @classmethod
+    def manual_withdrawal_failed(cls, txn: "Transaction", reason: str) -> "NotifyEvent":
+        dest = txn.metadata.get("dest", None) if txn.metadata else None
+        failed_on_str = txn.metadata.get("failed_on") if txn.metadata else None
+
+        if dest is None:
+            raise AppError("Destination not set", 500)
+        if failed_on_str is None:
+            raise AppError("Failed on is not set", 500)
+
+        date = (
+            datetime.fromisoformat(failed_on_str)
+            .astimezone(user_tz)
+            .strftime("%A, %B %d • %-I:%M %p")
+        )
+
+        return cls(
+            aggregate_id=str(txn.reference),
+            payload=NotifyPayload(
+                channel="EMAIL",
+                user_id=str(txn.user_id),
+                type="withdrawal_failed",
+                subject="Withdrawal failed",
+                html=None,
+                data={
+                    "amount": format_currency(
+                        txn.amount
+                        - (txn.charge_data.charge_amount if txn.charge_data else 0)
+                    ),
+                    "reference_id": txn.reference,
+                    "destination": dest,
+                    "date": date,
+                    "reason": reason,
+                },
+                message=None,
+                template="withdrawal-failed",
+            ),
+        )

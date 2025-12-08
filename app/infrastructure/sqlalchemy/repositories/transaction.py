@@ -6,6 +6,7 @@ from sqlalchemy import select, func
 from app.domain.dto.transaction import TransactionFilter
 from app.domain.entities.transaction import Transaction
 from app.domain.repositories import ITransactionRepository
+from app.shared.errors import AppError
 
 
 from ..models import SqlAlchemyTransaction
@@ -23,6 +24,32 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         # print(entity.amount, entity.charge_data, entity.settlement_data)
         await self._session.merge(entity)
         await self._session.flush()
+
+    async def get_by_id(
+        self,
+        id: UUID,
+        lock_for_update: bool = False,
+    ) -> Transaction:
+        result = await self._session.execute(
+            (
+                select(SqlAlchemyTransaction).where(
+                    SqlAlchemyTransaction.id == id,
+                )
+                if not lock_for_update
+                else select(SqlAlchemyTransaction)
+                .where(
+                    SqlAlchemyTransaction.id == id,
+                )
+                .with_for_update()
+            ),
+        )
+
+        entity = result.scalars().one_or_none()
+
+        if entity:
+            return entity.to_domain()
+
+        raise AppError(f"Transaction {id} not found", 404)
 
     async def get_by_reference_or_none(
         self,

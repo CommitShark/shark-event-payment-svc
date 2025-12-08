@@ -18,6 +18,13 @@ class ITransactionRepository(Protocol):
     ) -> Transaction | None: ...
 
     @abstractmethod
+    async def get_by_id(
+        self,
+        reference: UUID,
+        lock_for_update: bool = False,
+    ) -> Transaction: ...
+
+    @abstractmethod
     async def query_by_user(
         self,
         offset: int,

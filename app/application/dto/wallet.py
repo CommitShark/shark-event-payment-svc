@@ -50,3 +50,9 @@ class ListUserTransactionResponseDto(PaginatedResponseDto[TransactionDto]):
 
 class SaveBankReqDto(PersonalAccountWithSignature):
     pin: str
+
+
+class UpdateTransactionStatusReqDto(BaseModel):
+    status: TransactionSettlementStatus
+    id: UUID
+    reason: str

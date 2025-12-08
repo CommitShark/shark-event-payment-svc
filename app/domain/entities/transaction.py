@@ -81,6 +81,34 @@ class Transaction(BaseModel):
         self._events.clear()
         return events_
 
+    def mark_as_failed(self, reason: str) -> Decimal | None:
+        if self.transaction_type == "withdrawal" and (
+            self.settlement_status == "pending"
+            or self.settlement_status == "processing"
+        ):
+            mode = (self.metadata or {}).get("mode")
+
+            if mode == "manual":
+                # Refund user and create a failed notification then return refundable amount
+                self.settlement_status = "failed"
+                self.metadata = self.metadata or {}
+                self.metadata["failed_on"] = datetime.now(timezone.utc).isoformat()
+
+                self._events.append(
+                    NotifyEvent.manual_withdrawal_failed(
+                        self,
+                        reason,
+                    )
+                )
+
+                return self.amount + (
+                    self.charge_data.charge_amount if self.charge_data else 0
+                )
+
+        raise AppError(
+            "MarkAsFailed: Not Implemented", 500, {"txn": self.model_dump_json()}
+        )
+
     def complete_settlement(self):
         self.settlement_status = "completed"
         if self.transaction_type == "purchase":

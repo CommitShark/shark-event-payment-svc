@@ -330,6 +330,7 @@ class TransactionEventHandler(IEventHandler):
         if settings.auto_withdrawal_enabled == 0:
             # Alert admin & User
             txn.metadata = txn.metadata or {}
+            txn.metadata["mode"] = "manual"
             txn.metadata["dest"] = wallet.bank_details.build_dest()
             await txn_repo.save(txn)
             for ev in NotifyEvent.manual_withdrawal_initiated(txn):

@@ -4,6 +4,7 @@ from uuid import UUID
 from typing import cast
 from decimal import Decimal, ROUND_HALF_UP
 
+from app.config import settings
 from app.domain.repositories import ITransactionRepository, IWalletRepository
 from app.domain.ports import ITicketService, IUserService, IEventBus
 from app.domain.entities import Transaction
@@ -12,6 +13,8 @@ from app.domain.events import (
     TransactionCreatedEvent,
     TransactionCreatedPayload,
     WalletFundedEvent,
+    CompleteWithdrawEvent,
+    NotifyEvent,
 )
 from app.domain.events.base import DomainEvent
 from app.shared.errors import AppError
@@ -33,13 +36,63 @@ REFERRAL_PERCENTAGE = Decimal("12")
 
 
 class TransactionEventHandler(IEventHandler):
-    events = [TransactionCreatedEvent]
+    events = [
+        TransactionCreatedEvent,
+        CompleteWithdrawEvent,
+    ]
 
     async def handle(self, event: DomainEvent):
         if isinstance(event, TransactionCreatedEvent):
             await self._process_transaction_created(event)
+        elif isinstance(event, CompleteWithdrawEvent):
+            await self._process_withdrawal_completion(event)
         else:
             logger.warning(f"Unhandled event type: {type(event).__name__}")
+
+    async def _process_withdrawal_completion(self, ev: CompleteWithdrawEvent):
+        logger.debug(f"Processing withdrawal completion AGG ID: {ev.aggregate_id}")
+
+        async with session_context() as session:
+            txn_repo = get_txn_repo(session)
+            event_bus = get_event_bus()
+
+            payload = ev.payload
+
+            txn = await txn_repo.get_by_reference_or_none(UUID(payload.ref))
+
+            if not txn:
+                raise AppError(f"Transaction {payload.ref} not found", 404)
+
+            logger.debug(f"Transaction with ref {payload.ref} found")
+
+            if txn.settlement_status != "pending":
+                logger.debug(
+                    f"Transaction with ref {payload.ref} is no longer pending, status is {txn.settlement_status}",
+                )
+                return
+
+            if txn.transaction_type != "withdrawal":
+                raise AppError(
+                    f"Transaction {payload.ref} is not a withdrawal it is a {txn.transaction_type}",
+                    400,
+                )
+
+            if txn.amount != payload.amount:
+                raise AppError(
+                    f"Transaction {payload.ref} is valid \nAmount mismatch Provider {payload.amount} Txn {txn.amount}",
+                    400,
+                )
+
+            txn.metadata = txn.metadata or {}
+            txn.metadata["dest"] = payload.dest
+            txn.metadata["completed_at"] = payload.date
+
+            txn.complete_settlement()
+            await txn_repo.save(txn)
+            await session.commit()
+
+            for t_ev in txn.events:
+                await event_bus.publish(t_ev)
 
     async def _process_transaction_created(self, event: TransactionCreatedEvent):
         logger.debug(f"Processing transaction created AGG ID: {event.aggregate_id}")
@@ -97,6 +150,7 @@ class TransactionEventHandler(IEventHandler):
                     txn,
                     txn_repo,
                     wallet_repo,
+                    event_bus,
                 )
             else:
                 raise AppError(f"{txn} not implemented", 500)
@@ -264,15 +318,27 @@ class TransactionEventHandler(IEventHandler):
         txn: Transaction,
         txn_repo: ITransactionRepository,
         wallet_repo: IWalletRepository,
+        event_bus: IEventBus,
     ):
-        payment_adapter = get_IPaymentAdapter()
-
-        logger.debug(f"Transaction: {txn.reference}: Withdraw")
-
         wallet = await wallet_repo.get_by_user_or_create(txn.user_id)
 
         if wallet.bank_details is None:
             raise AppError("User is yet to configure external bank", 400)
+
+        logger.debug(f"Transaction: {txn.reference}: Withdraw")
+
+        if settings.auto_withdrawal_enabled == 0:
+            # Alert admin & User
+            txn.metadata = txn.metadata or {}
+            txn.metadata["dest"] = wallet.bank_details.build_dest()
+            await txn_repo.save(txn)
+            for ev in NotifyEvent.manual_withdrawal_initiated(txn):
+                await event_bus.publish(ev)
+
+            logger.debug(f"Transaction: {txn.reference}: Alerted User & Admin")
+            return
+
+        payment_adapter = get_IPaymentAdapter()
 
         txn.settlement_status = "processing"
 

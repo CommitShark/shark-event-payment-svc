@@ -56,3 +56,27 @@ class BankDetails(BaseModel):
     bank_name: str
     bank_code: str
     updated_at: datetime
+
+    def build_dest(self) -> str:
+        """
+        Returns a human-friendly destination string, e.g.:
+
+        '0012345678 • Test User • GTBank'
+        '0012345678 • GTBank'
+        '0012345678'
+        """
+        parts: list[str] = []
+
+        # Required
+        parts.append(self.account_number)
+
+        # Optional
+        if self.account_name:
+            parts.append(self.account_name)
+
+        # Optional
+        if self.bank_name:
+            parts.append(self.bank_name)
+
+        # Join gracefully with separators
+        return " • ".join(parts)

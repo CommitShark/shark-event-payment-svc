@@ -71,6 +71,60 @@ class CreateRecipientResDto(BaseModel):
     recipient_code: str
 
 
+class PaystackRecipientDetail(BaseModel):
+    authorization_code: str | None
+    account_number: str
+    account_name: str | None
+    bank_code: str
+    bank_name: str
+
+    def build_dest(self) -> str:
+        """
+        Returns a human-friendly destination string, e.g.:
+
+        '0012345678 • Test User • GTBank'
+        '0012345678 • GTBank'
+        '0012345678'
+        """
+        parts: list[str] = []
+
+        # Required
+        parts.append(self.account_number)
+
+        # Optional
+        if self.account_name:
+            parts.append(self.account_name)
+
+        # Optional
+        if self.bank_name:
+            parts.append(self.bank_name)
+
+        # Join gracefully with separators
+        return " • ".join(parts)
+
+
+class PaystackRecipient(BaseModel):
+    active: bool
+    type: str
+    is_deleted: bool
+    details: PaystackRecipientDetail
+
+
+class PaystackTransferSuccessEvent(BaseModel):
+    amount: Decimal
+    currency: str
+    reference: str
+    status: str
+    transferred_at: str | None
+    updatedAt: str
+    recipient: PaystackRecipient
+
+
+class PaystackEvent(BaseModel, Generic[T]):
+    event: str
+    data: T
+
+
 class PaystackAdapter(IPaymentAdapter):
     def __init__(
         self,
@@ -87,10 +141,12 @@ class PaystackAdapter(IPaymentAdapter):
         payload = {
             "type": "nuban",
             "name": account_name,
-            "account_number": account_number,
-            "bank_code": bank_code,
+            "account_number": account_number if not settings.debug else "0000000000",
+            "bank_code": bank_code if not settings.debug else "057",
             "currency": "NGN",
         }
+
+        print(f"Add recipient {payload}")
 
         response = await self._client.post(
             endpoint="/transferrecipient",
@@ -121,7 +177,7 @@ class PaystackAdapter(IPaymentAdapter):
                 error_code=ErrorCodes.DATA_VALIDATION_ERROR,
             )
 
-        if parsed_res.data.active and not parsed_res.data.is_deleted:
+        if not parsed_res.data.active or parsed_res.data.is_deleted:
             logger.error(
                 f"Invalid data Active={parsed_res.data.active}, IsDeleted={parsed_res.data.is_deleted}"
             )

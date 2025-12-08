@@ -10,6 +10,10 @@ T = TypeVar("T")
 class BaseResponseDTO(BaseModel):
     success: bool
 
+    @classmethod
+    def successful(cls):
+        return cls(success=True)
+
 
 class DateRange(BaseModel):
     from_date: Optional[datetime] = None

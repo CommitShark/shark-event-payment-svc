@@ -13,5 +13,7 @@ class GenericSettings(BaseSettings):
 
     debug: bool
 
+    auto_withdrawal_enabled: int
+
 
 settings = GenericSettings()  # type:ignore

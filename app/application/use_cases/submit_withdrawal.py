@@ -40,7 +40,7 @@ class SubmitWithdrawalUseCase:
             raise AppError("Insufficient balance", 400)
 
         payload = {
-            "base_amount": amount,
+            "base_amount": str(amount),
             "charge_setting_id": charge_setting_id,
             "version_id": version_id,
             "version_number": version_number,

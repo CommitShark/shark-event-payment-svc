@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Optional, Any
 
 from app.shared.errors import AppError
-from ..events import TransactionCreatedEvent, PurchaseSettledEvent
+from ..events import TransactionCreatedEvent, PurchaseSettledEvent, NotifyEvent
 from ..events.base import DomainEvent
 from .value_objects import (
     TransactionDirection,
@@ -85,6 +85,8 @@ class Transaction(BaseModel):
         self.settlement_status = "completed"
         if self.transaction_type == "purchase":
             self._events.append(PurchaseSettledEvent.create(self))
+        elif self.transaction_type == "withdrawal":
+            self._events.append(NotifyEvent.withdrawal_complete(self))
 
     def add_settlement(self, data: SettlementData):
         if self.settlement_status != "pending":

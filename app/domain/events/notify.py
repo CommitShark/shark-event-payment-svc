@@ -65,10 +65,7 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                 subject="Withdrawal complete",
                 html=None,
                 data={
-                    "amount": format_currency(
-                        txn.amount
-                        - (txn.charge_data.charge_amount if txn.charge_data else 0)
-                    ),
+                    "amount": format_currency(txn.amount),
                     "reference_id": txn.reference,
                     "destination": dest,
                     "date": completion_date,
@@ -99,7 +96,6 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                     data={
                         "amount": f"{format_currency(
                             txn.amount
-                            - (txn.charge_data.charge_amount if txn.charge_data else 0)
                         )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
                         "reference_id": txn.reference,
                         "destination": dest,
@@ -121,7 +117,6 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                     data={
                         "amount": f"{format_currency(
                             txn.amount
-                            - (txn.charge_data.charge_amount if txn.charge_data else 0)
                         )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
                         "reference_id": txn.reference,
                         "destination": dest,
@@ -159,10 +154,9 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                 subject="Withdrawal failed",
                 html=None,
                 data={
-                    "amount": format_currency(
-                        txn.amount
-                        - (txn.charge_data.charge_amount if txn.charge_data else 0)
-                    ),
+                    "amount": f"{format_currency(
+                            txn.amount
+                        )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
                     "reference_id": txn.reference,
                     "destination": dest,
                     "date": date,

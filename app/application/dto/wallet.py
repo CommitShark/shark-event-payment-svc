@@ -4,7 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 from typing import Optional
 
-from app.domain.dto import PersonalAccountWithSignature
+from app.domain.dto import PersonalAccountWithSignature, TransactionFilter
 from app.domain.entities.value_objects import (
     TransactionDirection,
     TransactionSettlementStatus,
@@ -36,7 +36,11 @@ class TransactionDto(BaseModel):
     direction: TransactionDirection
 
 
-class ListUserTransactionRequestDto(PaginatedReqDto):
+class ListTransactionRequestDto(PaginatedReqDto):
+    filter: Optional[TransactionFilter] = None
+
+
+class ListUserTransactionRequestDto(ListTransactionRequestDto):
     user_id: UUID
 
 

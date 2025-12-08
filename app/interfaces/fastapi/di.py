@@ -22,7 +22,7 @@ from app.application.use_cases import (
     RequestChargeUseCase,
     CreateCheckoutUseCase,
     VerifyTicketPurchaseTransactionUseCase,
-    ListUserTransactionUseCase,
+    ListTransactionUseCase,
     GetBalanceUseCase,
     SetTransactionPinUseCase,
     ResolvePersonalAccountUseCase,
@@ -163,13 +163,13 @@ VerifyTicketPurchaseTransactionUseCaseDep = Annotated[
 
 
 def get_ListUserTransactionUseCase(txn_repo: TxnRepoDep):
-    return ListUserTransactionUseCase(
+    return ListTransactionUseCase(
         txn_repo=txn_repo,
     )
 
 
 ListUserTransactionUseCaseDep = Annotated[
-    ListUserTransactionUseCase, Depends(get_ListUserTransactionUseCase)
+    ListTransactionUseCase, Depends(get_ListUserTransactionUseCase)
 ]
 
 

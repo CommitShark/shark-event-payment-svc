@@ -1,17 +1,25 @@
 from app.domain.repositories import ITransactionRepository
 from app.application.dto.wallet import (
     ListUserTransactionRequestDto,
+    ListTransactionRequestDto,
     TransactionDto,
 )
 from app.application.dto.base import PaginatedResponseDto
 from app.application.mappers.wallet import transaction_to_dto
 
 
-class ListUserTransactionUseCase:
+class ListTransactionUseCase:
     def __init__(self, txn_repo: ITransactionRepository) -> None:
         self._txn_repo = txn_repo
 
-    async def execute(
+    async def execute(self, req: ListTransactionRequestDto):
+        return await self._txn_repo.query(
+            offset=req.offset,
+            limit=req.page_size,
+            filter=req.filter,
+        )
+
+    async def by_user(
         self,
         req: ListUserTransactionRequestDto,
     ) -> PaginatedResponseDto[TransactionDto]:

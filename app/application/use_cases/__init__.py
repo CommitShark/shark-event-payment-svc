@@ -1,7 +1,7 @@
 from .request_charge import RequestChargeUseCase
 from .create_checkout import CreateCheckoutUseCase
 from .verify_transaction import VerifyTicketPurchaseTransactionUseCase
-from .list_transactions import ListUserTransactionUseCase
+from .list_transactions import ListTransactionUseCase
 from .get_balance import GetBalanceUseCase
 from .set_transaction_pin import SetTransactionPinUseCase
 from .resolve_personal_account import ResolvePersonalAccountUseCase
@@ -13,7 +13,7 @@ __all__ = [
     "RequestChargeUseCase",
     "CreateCheckoutUseCase",
     "VerifyTicketPurchaseTransactionUseCase",
-    "ListUserTransactionUseCase",
+    "ListTransactionUseCase",
     "GetBalanceUseCase",
     "SetTransactionPinUseCase",
     "ResolvePersonalAccountUseCase",

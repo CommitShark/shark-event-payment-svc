@@ -1,7 +1,9 @@
+from typing import List
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
+from app.domain.dto.transaction import TransactionFilter
 from app.domain.entities.transaction import Transaction
 from app.domain.repositories import ITransactionRepository
 
@@ -54,6 +56,45 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         base_stmt = select(SqlAlchemyTransaction).where(
             SqlAlchemyTransaction.user_id == user_id
         )
+
+        # -----------------------
+        # 1. Get total count
+        # -----------------------
+        count_stmt = select(func.count()).select_from(base_stmt.subquery())
+        total = (await self._session.execute(count_stmt)).scalar_one()
+
+        # -----------------------
+        # 2. Get paginated data
+        # -----------------------
+        data_stmt = (
+            base_stmt.order_by(SqlAlchemyTransaction.occurred_on.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        result = await self._session.execute(data_stmt)
+        entities = result.scalars().all()
+
+        return [entity.to_domain() for entity in entities], total
+
+    async def query(
+        self,
+        offset: int,
+        limit: int,
+        filter: TransactionFilter | None = None,
+    ) -> tuple[List[Transaction], int]:
+        base_stmt = select(SqlAlchemyTransaction)
+
+        if filter:
+            if filter.status:
+                base_stmt = base_stmt.where(
+                    SqlAlchemyTransaction.settlement_status == filter.status
+                )
+
+            if filter.type:
+                base_stmt = base_stmt.where(
+                    SqlAlchemyTransaction.transaction_type == filter.type
+                )
 
         # -----------------------
         # 1. Get total count

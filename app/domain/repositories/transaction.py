@@ -3,6 +3,7 @@ from uuid import UUID
 from abc import abstractmethod
 
 from ..entities import Transaction
+from ..dto import TransactionFilter
 
 
 class ITransactionRepository(Protocol):
@@ -22,4 +23,12 @@ class ITransactionRepository(Protocol):
         offset: int,
         limit: int,
         user_id: UUID,
+    ) -> tuple[List[Transaction], int]: ...
+
+    @abstractmethod
+    async def query(
+        self,
+        offset: int,
+        limit: int,
+        filter: TransactionFilter | None = None,
     ) -> tuple[List[Transaction], int]: ...

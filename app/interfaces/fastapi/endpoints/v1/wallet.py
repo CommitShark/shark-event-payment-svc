@@ -48,7 +48,7 @@ async def get_transactions(
         user_id=context.user_id,
     )
 
-    result = await use_case.execute(req)
+    result = await use_case.by_user(req)
 
     return ListUserTransactionResponseDto(**result.model_dump())
 

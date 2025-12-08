@@ -37,6 +37,7 @@ class Transaction(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Optional[dict] = None
     parent_id: Optional[UUID] = None
+    delayed_settlement_until: Optional[datetime] = None
 
     _events: list[DomainEvent[Any]] = []
 

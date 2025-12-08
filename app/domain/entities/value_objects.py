@@ -11,6 +11,7 @@ TransactionSettlementStatus = Literal[
     "completed",
     "not_applicable",
     "processing",
+    "scheduled",
 ]
 TransactionType = Literal[
     "purchase",

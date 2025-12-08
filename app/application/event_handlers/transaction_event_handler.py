@@ -3,6 +3,7 @@ import asyncio
 from uuid import UUID
 from typing import cast
 from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime, timezone, timedelta
 
 from app.config import settings
 from app.domain.repositories import ITransactionRepository, IWalletRepository
@@ -164,6 +165,21 @@ class TransactionEventHandler(IEventHandler):
         payload: TransactionCreatedPayload,
         event_bus: IEventBus,
     ):
+        if settings.settlement_delay_hours > 0:
+            txn.settlement_status = "scheduled"
+            txn.delayed_settlement_until = datetime.now(timezone.utc) + timedelta(
+                hours=settings.settlement_delay_hours
+            )
+
+            await txn_repo.save(txn)
+
+            logger.info(
+                f"Transaction {payload.reference} scheduled for settlement at "
+                f"{txn.delayed_settlement_until}"
+            )
+
+            return
+
         logger.debug(f"Settle ticket purchase for txn with ref {payload.reference}")
 
         # Validate charge data exists

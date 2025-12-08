@@ -15,5 +15,7 @@ class GenericSettings(BaseSettings):
 
     auto_withdrawal_enabled: int
 
+    settlement_delay_hours: int
+
 
 settings = GenericSettings()  # type:ignore

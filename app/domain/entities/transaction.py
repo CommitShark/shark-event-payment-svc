@@ -82,6 +82,15 @@ class Transaction(BaseModel):
         self._events.clear()
         return events_
 
+    def schedule_settlement(self, run_at: datetime):
+        if self.settlement_status != "pending":
+            raise AppError(
+                "Cannot schedule settlement for non-pending transaction", 409
+            )
+
+        self.delayed_settlement_until = run_at
+        self.settlement_status = "scheduled"
+
     def mark_as_failed(self, reason: str) -> Decimal | None:
         if self.transaction_type == "withdrawal" and (
             self.settlement_status == "pending"

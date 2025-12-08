@@ -166,10 +166,10 @@ class TransactionEventHandler(IEventHandler):
         event_bus: IEventBus,
     ):
         if settings.settlement_delay_hours > 0:
-            txn.settlement_status = "scheduled"
-            txn.delayed_settlement_until = datetime.now(timezone.utc) + timedelta(
+            run_at = datetime.now(timezone.utc) + timedelta(
                 hours=settings.settlement_delay_hours
             )
+            txn.schedule_settlement(run_at)
 
             await txn_repo.save(txn)
 
@@ -177,7 +177,6 @@ class TransactionEventHandler(IEventHandler):
                 f"Transaction {payload.reference} scheduled for settlement at "
                 f"{txn.delayed_settlement_until}"
             )
-
             return
 
         logger.debug(f"Settle ticket purchase for txn with ref {payload.reference}")

@@ -1,4 +1,5 @@
 import logging
+import sys
 import grpc  # type: ignore
 from typing import cast, Type, Any
 from fastapi import FastAPI, Request
@@ -24,11 +25,6 @@ from app.application.event_handlers import TransactionEventHandler
 from .endpoints.v1 import charges, checkout, wallet, webhook
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()],
-)
 
 
 async def setup_handlers(event_bus: IEventBus):

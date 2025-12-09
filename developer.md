@@ -15,3 +15,9 @@ python -m grpc_tools.protoc -I proto --python_out=./app/infrastructure/grpc --gr
 ```bash
 source .venv/bin/activate && pip install -r requirements.txt -e .
 ```
+
+## Run Background worker
+
+```bash
+python -m app.infrastructure.worker.bootstrap
+```

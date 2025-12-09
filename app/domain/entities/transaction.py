@@ -120,6 +120,9 @@ class Transaction(BaseModel):
         )
 
     def complete_settlement(self):
+        if self.settlement_status not in ("pending", "scheduled"):
+            raise AppError("Cannot complete settlement", 409)
+
         self.settlement_status = "completed"
         if self.transaction_type == "purchase":
             self._events.append(PurchaseSettledEvent.create(self))

@@ -1,3 +1,5 @@
+import logging
+from datetime import datetime
 from typing import List
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,25 +14,40 @@ from app.shared.errors import AppError
 from ..models import SqlAlchemyTransaction
 
 
+logger = logging.getLogger("[SqlAlchemyTransactionRepository]")
+
+
 class SqlAlchemyTransactionRepository(ITransactionRepository):
     def __init__(
         self,
-        session: AsyncSession,
+        session: AsyncSession | None = None,
     ) -> None:
+        self._session: AsyncSession | None = session
+
+    def set_session(self, session: AsyncSession) -> None:
+        logger.info("Set session")
+        if self._session is not None:
+            raise AppError("Session is already set", 500)
         self._session = session
+
+    @property
+    def safe_session(self) -> AsyncSession:
+        if self._session is None:
+            raise AppError("Session is not set", 500)
+        return self._session
 
     async def save(self, txn: Transaction) -> None:
         entity = SqlAlchemyTransaction.from_domain(txn)
         # print(entity.amount, entity.charge_data, entity.settlement_data)
-        await self._session.merge(entity)
-        await self._session.flush()
+        await self.safe_session.merge(entity)
+        await self.safe_session.flush()
 
     async def get_by_id(
         self,
         id: UUID,
         lock_for_update: bool = False,
     ) -> Transaction:
-        result = await self._session.execute(
+        result = await self.safe_session.execute(
             (
                 select(SqlAlchemyTransaction).where(
                     SqlAlchemyTransaction.id == id,
@@ -56,7 +73,7 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         reference: UUID,
         lock_for_update: bool = False,
     ) -> Transaction | None:
-        result = await self._session.execute(
+        result = await self.safe_session.execute(
             (
                 select(SqlAlchemyTransaction).where(
                     SqlAlchemyTransaction.reference == reference,
@@ -88,7 +105,7 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         # 1. Get total count
         # -----------------------
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
-        total = (await self._session.execute(count_stmt)).scalar_one()
+        total = (await self.safe_session.execute(count_stmt)).scalar_one()
 
         # -----------------------
         # 2. Get paginated data
@@ -99,7 +116,7 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
             .limit(limit)
         )
 
-        result = await self._session.execute(data_stmt)
+        result = await self.safe_session.execute(data_stmt)
         entities = result.scalars().all()
 
         return [entity.to_domain() for entity in entities], total
@@ -127,7 +144,7 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         # 1. Get total count
         # -----------------------
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
-        total = (await self._session.execute(count_stmt)).scalar_one()
+        total = (await self.safe_session.execute(count_stmt)).scalar_one()
 
         # -----------------------
         # 2. Get paginated data
@@ -138,7 +155,23 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
             .limit(limit)
         )
 
-        result = await self._session.execute(data_stmt)
+        result = await self.safe_session.execute(data_stmt)
         entities = result.scalars().all()
 
         return [entity.to_domain() for entity in entities], total
+
+    async def find_due_scheduled(
+        self,
+        date: datetime,
+    ) -> List[Transaction]:
+        stmt = (
+            select(SqlAlchemyTransaction)
+            .where(SqlAlchemyTransaction.settlement_status == "scheduled")
+            .where(SqlAlchemyTransaction.delayed_settlement_until <= date)
+            .limit(20)  # Batch Size for processing due settlements
+        )
+
+        result = await self.safe_session.execute(stmt)
+        entities = result.scalars().all()
+
+        return [entity.to_domain() for entity in entities]

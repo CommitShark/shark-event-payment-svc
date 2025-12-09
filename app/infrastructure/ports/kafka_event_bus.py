@@ -37,8 +37,7 @@ class KafkaEventBus(IEventBus):
         self._consumer: AIOKafkaConsumer | None = None
         self._is_running = False
 
-    async def connect(self):
-        """Initialize Kafka producer and consumer"""
+    async def connect_producer(self):
         try:
             # Create producer
             self._producer = AIOKafkaProducer(
@@ -47,6 +46,20 @@ class KafkaEventBus(IEventBus):
                 key_serializer=lambda v: v.encode("utf-8") if v else None,
             )
             await self._producer.start()
+        except Exception as e:
+            logger.error(f"Failed to connect to Kafka: {e}")
+            raise
+
+    async def disconnect_producer(self):
+        if self._producer:
+            await self._producer.stop()
+            logger.info("Kafka producer stopped")
+
+    async def connect(self):
+        """Initialize Kafka producer and consumer"""
+        try:
+            # Create producer
+            await self.connect_producer()
 
             # Create consumer
             self._consumer = AIOKafkaConsumer(

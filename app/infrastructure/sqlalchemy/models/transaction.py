@@ -105,6 +105,11 @@ class SqlAlchemyTransaction(Base):
         nullable=True,
     )
 
+    delayed_settlement_until: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     @classmethod
     def from_domain(cls, data: Transaction) -> "SqlAlchemyTransaction":
         return cls(
@@ -126,6 +131,7 @@ class SqlAlchemyTransaction(Base):
             created_at=data.created_at,
             metadata_=data.metadata,
             parent_id=data.parent_id,
+            delayed_settlement_until=data.delayed_settlement_until,
         )
 
     def to_domain(self) -> "Transaction":
@@ -152,4 +158,5 @@ class SqlAlchemyTransaction(Base):
             created_at=self.created_at,
             metadata=self.metadata_,
             parent_id=self.parent_id,
+            delayed_settlement_until=self.delayed_settlement_until,
         )

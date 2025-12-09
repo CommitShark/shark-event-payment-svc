@@ -1,6 +1,7 @@
 from typing import Protocol, List
 from uuid import UUID
 from abc import abstractmethod
+from datetime import datetime
 
 from ..entities import Transaction
 from ..dto import TransactionFilter
@@ -8,7 +9,13 @@ from ..dto import TransactionFilter
 
 class ITransactionRepository(Protocol):
     @abstractmethod
-    async def save(self, txn: Transaction) -> None: ...
+    def set_session(self, session) -> None: ...
+
+    @abstractmethod
+    async def save(self, txn: "Transaction") -> None: ...
+
+    @abstractmethod
+    async def find_due_scheduled(self, date: datetime) -> list["Transaction"]: ...
 
     @abstractmethod
     async def get_by_reference_or_none(

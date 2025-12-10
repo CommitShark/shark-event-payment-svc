@@ -33,7 +33,6 @@ pydantic-settings==2.12.0
 pydantic_core==2.41.5
 python-dotenv==1.2.1
 setuptools==80.9.0
--e git+https://github.com/pelDev/shark-event-payment-svc.git@856cfc9cbec65ce9622e905a9cd303d09db692b1#egg=shark_event
 sniffio==1.3.1
 SQLAlchemy==2.0.44
 starlette==0.50.0

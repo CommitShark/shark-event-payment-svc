@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 
 
 class GenericSettings(BaseSettings):
@@ -11,11 +12,17 @@ class GenericSettings(BaseSettings):
 
     account_validation_key: str
 
-    debug: bool
-
     auto_withdrawal_enabled: int
 
     settlement_delay_hours: int
+
+    debug: bool = False
+
+    @field_validator("debug", mode="before")
+    def parse_debug(cls, v):
+        if isinstance(v, str):
+            return v.lower() in {"1", "true", "yes", "on"}
+        return bool(v)
 
 
 settings = GenericSettings()  # type:ignore

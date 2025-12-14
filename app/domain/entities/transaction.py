@@ -120,7 +120,7 @@ class Transaction(BaseModel):
         )
 
     def complete_settlement(self):
-        if self.settlement_status not in ("pending", "scheduled"):
+        if self.settlement_status not in ("pending", "scheduled", "completed"):
             raise AppError("Cannot complete settlement", 409)
 
         self.settlement_status = "completed"
@@ -136,7 +136,10 @@ class Transaction(BaseModel):
             )
         self.settlement_data.append(data)
 
-    def create_settlement_transactions(self) -> list["Transaction"]:
+    def create_settlement_transactions(
+        self,
+        run_at: datetime | None = None,
+    ) -> list["Transaction"]:
         return [
             Transaction.create(
                 amount=s.amount,
@@ -147,7 +150,8 @@ class Transaction(BaseModel):
                 transaction_type=s.transaction_type,
                 source=self.source,
                 reference=uuid4(),
-                settlement_status="pending",
+                settlement_status="pending" if run_at is None else "scheduled",
+                delayed_settlement_until=run_at,
                 parent_id=self.id,
             )
             for s in self.settlement_data
@@ -170,6 +174,7 @@ class Transaction(BaseModel):
         metadata: Optional[dict] = None,
         transaction_direction: Optional[TransactionDirection] = None,
         parent_id: Optional[UUID] = None,
+        delayed_settlement_until: Optional[datetime] = None,
     ) -> "Transaction":
 
         # Automatic direction logic

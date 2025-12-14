@@ -14,6 +14,7 @@ service GrpcTicketingService {
 
 message MarkReservationAsPaidRequest {
     string reservation_id = 1;
+    string ticket_amount = 2;
 }
 
 message MarkReservationAsPaidResponse {

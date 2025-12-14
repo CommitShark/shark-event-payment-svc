@@ -27,7 +27,7 @@ class GrpcTicketService(ITicketService):
     ) -> None:
         self._ticket_stub = ticket_stub
 
-    async def mark_reservation_as_paid(self, reservation_id: str):
+    async def mark_reservation_as_paid(self, reservation_id: str, amount: Decimal):
         if cb.current_state == CircuitBreakerState.OPEN:
             raise AppError(
                 "Ticket services is currently unavailable, try again later", 503
@@ -35,6 +35,7 @@ class GrpcTicketService(ITicketService):
 
         request = ticketing_pb2.MarkReservationAsPaidRequest(
             reservation_id=reservation_id,
+            ticket_amount=str(amount),
         )
 
         try:

@@ -6,6 +6,10 @@ from ..entities import Wallet
 
 
 class IWalletRepository(Protocol):
+
+    @abstractmethod
+    def set_session(self, session) -> None: ...
+
     @abstractmethod
     async def save(self, w: Wallet) -> None: ...
 

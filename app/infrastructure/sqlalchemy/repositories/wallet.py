@@ -11,20 +11,31 @@ from ..models import SqlAlchemyWallet
 class SqlAlchemyWalletRepository(IWalletRepository):
     def __init__(
         self,
-        session: AsyncSession,
+        session: AsyncSession | None = None,
     ) -> None:
+        self._session: AsyncSession | None = session
+
+    def set_session(self, session: AsyncSession) -> None:
+        if self._session is not None:
+            raise AppError("Session is already set", 500)
         self._session = session
 
+    @property
+    def session(self) -> AsyncSession:
+        if self._session is None:
+            raise AppError("Session is not set", 500)
+        return self._session
+
     async def save(self, w: Wallet) -> None:
-        await self._session.merge(SqlAlchemyWallet.from_domain(w))
-        await self._session.flush()
+        await self.session.merge(SqlAlchemyWallet.from_domain(w))
+        await self.session.flush()
 
     async def get_by_user_or_create(
         self,
         u: UUID,
         lock_for_update: bool = False,
     ) -> Wallet:
-        result = await self._session.execute(
+        result = await self.session.execute(
             (
                 select(SqlAlchemyWallet).where(
                     SqlAlchemyWallet.user_id == u,

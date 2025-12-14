@@ -9,10 +9,12 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class MarkReservationAsPaidRequest(_message.Message):
-    __slots__ = ("reservation_id",)
+    __slots__ = ("reservation_id", "ticket_amount")
     RESERVATION_ID_FIELD_NUMBER: _ClassVar[int]
+    TICKET_AMOUNT_FIELD_NUMBER: _ClassVar[int]
     reservation_id: str
-    def __init__(self, reservation_id: _Optional[str] = ...) -> None: ...
+    ticket_amount: str
+    def __init__(self, reservation_id: _Optional[str] = ..., ticket_amount: _Optional[str] = ...) -> None: ...
 
 class MarkReservationAsPaidResponse(_message.Message):
     __slots__ = ("error",)

@@ -3,9 +3,12 @@ from app.application.use_cases import (
     ProcessDueSettlementsUseCase,
     SettleTicketPurchaseUseCase,
 )
-from app.domain.repositories import ITransactionRepository
+from app.domain.repositories import ITransactionRepository, IWalletRepository
 from app.domain.ports import ITicketService, IUserService, IEventBus
-from app.infrastructure.sqlalchemy.repositories import SqlAlchemyTransactionRepository
+from app.infrastructure.sqlalchemy.repositories import (
+    SqlAlchemyTransactionRepository,
+    SqlAlchemyWalletRepository,
+)
 from app.infrastructure.grpc import grpc_client
 from app.infrastructure.ports.kafka_event_bus import kafka_event_bus
 from app.config import grpc_config
@@ -69,6 +72,7 @@ def build_di_container():
     container.register(
         ITransactionRepository, lambda: SqlAlchemyTransactionRepository()
     )
+    container.register(IWalletRepository, lambda: SqlAlchemyWalletRepository())
 
     # Ports
     container.register(ITicketService, lambda: grpc_client.get_ticket_grpc_stub(), True)
@@ -90,7 +94,8 @@ def build_di_container():
         ProcessDueSettlementsUseCase,
         lambda: ProcessDueSettlementsUseCase(
             txn_repo=container.resolve(ITransactionRepository),
-            settle_use_case=container.resolve(SettleTicketPurchaseUseCase),
+            event_bus=container.resolve(IEventBus),
+            wallet_repo=container.resolve(IWalletRepository),
         ),
     )
 

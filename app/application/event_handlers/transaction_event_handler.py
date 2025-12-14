@@ -231,6 +231,18 @@ class TransactionEventHandler(IEventHandler):
         wallet_repo: IWalletRepository,
         event_bus: IEventBus,
     ):
+        now = datetime.now(timezone.utc)
+
+        if (
+            txn.settlement_status == "scheduled"
+            and txn.delayed_settlement_until
+            and now < txn.delayed_settlement_until
+        ):
+            logger.debug(
+                f"Cannot complete a scheduled settlement early REf: {txn.reference}"
+            )
+            return
+
         logger.debug(f"Transaction: {txn.reference}: Fund wallet")
 
         wallet = await wallet_repo.get_by_user_or_create(

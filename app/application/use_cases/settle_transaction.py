@@ -34,33 +34,18 @@ class SettleTicketPurchaseUseCase:
         if session is not None:
             self._txn_repo.set_session(session)
 
-        if settings.settlement_delay_hours > 0:
-            run_at = datetime.now(timezone.utc) + timedelta(
-                hours=settings.settlement_delay_hours
-            )
-            txn.schedule_settlement(run_at)
-
-            await self._txn_repo.save(txn)
-
-            logger.info(
-                f"Transaction {txn.reference} scheduled for settlement at "
-                f"{txn.delayed_settlement_until}"
-            )
-            return
-
-        if txn.settlement_status == "scheduled":
-            raise AppError("Cannot complete a scheduled settlement early", 409)
-
-        logger.debug(f"Settle ticket purchase for txn with ref {txn.reference}")
-
         # Validate charge data exists
         if not txn.charge_data:
             raise AppError(f"Transaction {txn.reference} missing charge data", 400)
 
         # Close Reservation
         logger.debug(f"Transaction {txn.reference}: Mark reservation as paid")
-        await self._ticket_service.mark_reservation_as_paid(str(txn.reference))
+        await self._ticket_service.mark_reservation_as_paid(
+            str(txn.reference), txn.amount
+        )
         logger.debug(f"Transaction {txn.reference}: Marked reservation as paid")
+
+        logger.debug(f"Settle ticket purchase for txn with ref {txn.reference}")
 
         slug = txn.metadata.get("slug", None) if txn.metadata else None
 
@@ -177,9 +162,18 @@ class SettleTicketPurchaseUseCase:
             )
         )
 
-        settlement_transactions = txn.create_settlement_transactions()
+        run_at = None
+        if settings.settlement_delay_hours > 0:
+            run_at = datetime.now(timezone.utc) + timedelta(
+                hours=settings.settlement_delay_hours
+            )
 
-        txn.complete_settlement()
+        settlement_transactions = txn.create_settlement_transactions(run_at)
+
+        if settings.settlement_delay_hours > 0:
+            txn.settlement_status = "completed"
+        else:
+            txn.complete_settlement()
 
         # Persist the updated transaction
         await self._txn_repo.save(txn)

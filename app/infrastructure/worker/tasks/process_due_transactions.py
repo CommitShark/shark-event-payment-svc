@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from datetime import datetime, timezone
-from app.domain.repositories import ITransactionRepository
 from app.infrastructure.sqlalchemy.session import get_async_session
 from app.application.use_cases import ProcessDueSettlementsUseCase
 from app.shared.errors import AppError

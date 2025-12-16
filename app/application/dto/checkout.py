@@ -10,6 +10,7 @@ class CheckoutMetaData(BaseModel):
     slug: str
     sponsored: bool
     user: str
+    quantity: int
     signature: str
 
 
@@ -23,6 +24,7 @@ class CreateCheckoutReqDto(BaseModel):
     slug: str
     email: EmailStr
     signature: str
+    quantity: int
 
 
 class CreateCheckoutResDto(BaseModel):

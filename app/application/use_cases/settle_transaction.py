@@ -41,7 +41,8 @@ class SettleTicketPurchaseUseCase:
         # Close Reservation
         logger.debug(f"Transaction {txn.reference}: Mark reservation as paid")
         await self._ticket_service.mark_reservation_as_paid(
-            str(txn.reference), txn.amount
+            str(txn.reference),
+            txn.amount,
         )
         logger.debug(f"Transaction {txn.reference}: Marked reservation as paid")
 

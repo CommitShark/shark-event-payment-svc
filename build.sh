@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-TAG="0.0.5"
+TAG="0.0.6"
 IMAGE="shark_event_payment_svc"
 DOCKER_USERNAME=""
 PLATFORMS="linux/amd64,linux/arm64"

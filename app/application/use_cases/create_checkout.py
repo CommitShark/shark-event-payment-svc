@@ -27,6 +27,7 @@ class CreateCheckoutUseCase:
         slug: str,
         email: str,
         signature: str,
+        quantity: int,
     ):
         is_valid, error = await self._ticket_service.reservation_is_valid(
             reservation_id
@@ -46,6 +47,7 @@ class CreateCheckoutUseCase:
             "user": user_id,
             "ticket_type": ticket_type_id,
             "slug": slug,
+            "quantity": quantity,
         }
         expected_signature = sign_payload(payload, settings.charge_req_key)
 
@@ -61,6 +63,7 @@ class CreateCheckoutUseCase:
             "slug": slug,
             "user": user_id,
             "sponsored": False,
+            "quantity": quantity,
         }
 
         metadata_signature = sign_payload(metadata_payload, settings.charge_req_key)

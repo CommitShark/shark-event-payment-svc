@@ -24,12 +24,18 @@ class RequestChargeUseCase:
         self,
         user_id: str,
         charge_type: str,
+        quantity: Optional[int] = None,
         ticket_type_id: Optional[str] = None,
         slug: Optional[str] = None,
         amount: Optional[Decimal] = None,
     ):
         if charge_type == "ticket_purchase_ng":
-            return await self.ticket_charge(user_id, ticket_type_id, slug)
+            return await self.ticket_charge(
+                user_id,
+                ticket_type_id,
+                slug,
+                quantity,
+            )
         elif charge_type == "instant_withdrawal_ng":
             return await self.instant_withdrawal_charge(user_id, amount)
 
@@ -40,11 +46,14 @@ class RequestChargeUseCase:
         user_id: str,
         ticket_type_id: Optional[str] = None,
         slug: Optional[str] = None,
+        quantity: Optional[int] = None,
     ):
-        if not ticket_type_id or not slug:
+        if not ticket_type_id or not slug or not quantity:
             raise AppError("Ticket type and event slug is required", 422)
 
         amount = await self._ticket_service.get_ticket_price(ticket_type_id)
+
+        amount = amount * Decimal(quantity)
 
         charge = await self._charge_repo.get_by_type("ticket_purchase_ng")
 
@@ -69,6 +78,7 @@ class RequestChargeUseCase:
             "user": user_id,
             "ticket_type": ticket_type_id,
             "slug": slug,
+            "quantity": quantity,
         }
 
         signature = sign_payload(payload, settings.charge_req_key)

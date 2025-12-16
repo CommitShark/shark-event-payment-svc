@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from fastapi.responses import RedirectResponse
 
 
 from app.application.dto.checkout import (
@@ -39,6 +38,7 @@ async def ticket_purchase(
         ticket_type_id=req.ticket_type_id,
         slug=req.slug,
         signature=req.signature,
+        quantity=req.quantity,
     )
 
     return CreateCheckoutResDto(

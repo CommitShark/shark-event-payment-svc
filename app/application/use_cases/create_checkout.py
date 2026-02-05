@@ -80,7 +80,6 @@ class CreateCheckoutUseCase:
             reference=reservation_id,
             callback_url=paystack_config.ticket_purchase_callback.format(
                 slug=slug,
-                purchase=ticket_type_id,
                 reservation=reservation_id,
             ),
             email=email,

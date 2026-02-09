@@ -7,6 +7,16 @@ service GrpcUserService {
   rpc GetSystemUser(GetSystemUserRequest) returns (GetSystemUserResponse);
   rpc GetReferralInfo(GetReferralInfoRequest) returns (GetReferralInfoResponse);
   rpc GetUserContactInfo(GetUserContactInfoRequest) returns (GetUserContactInfoResponse);
+  rpc GetUserDefaultTenant(GetUserDefaultTenantRequest) returns (GetUserDefaultTenantResponse);
+}
+
+message GetUserDefaultTenantRequest {
+  string user_auth_id = 1;
+}
+
+message GetUserDefaultTenantResponse {
+  optional string error = 1;
+  optional string tenant_id = 2;
 }
 
 message GetUserContactInfoRequest {

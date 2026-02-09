@@ -44,7 +44,9 @@ class VerifyTicketPurchaseTransactionUseCase:
 
         metadata: dict = ext_transaction.metadata
         signature = metadata.pop("signature", None)
-        _ = metadata.pop("referrer")
+
+        if "referrer" in metadata:
+            _ = metadata.pop("referrer")
 
         if not signature:
             logger.debug("Signature not found")

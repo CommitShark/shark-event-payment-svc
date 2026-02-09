@@ -103,7 +103,7 @@ class KafkaEventBus(IEventBus):
 
         try:
             # Use event type as topic name
-            topic = event.__class__._group
+            topic = event.event_type
 
             # Use aggregate ID as key for partitioning (if exists)
             key = event.aggregate_id
@@ -125,13 +125,8 @@ class KafkaEventBus(IEventBus):
         self,
         event_type: Type[DomainEvent],
         handler: Callable,
-        type_as_topic=False,
     ):
-        topic = (
-            event_type._group
-            if not type_as_topic
-            else f"{event_type._group}.{event_type._event_name}"
-        )
+        topic = f"{event_type._group}.{event_type._event_name}"
 
         if topic not in self._handlers:
             self._handlers[topic] = []

@@ -4,6 +4,20 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class GetUserDefaultTenantRequest(_message.Message):
+    __slots__ = ("user_auth_id",)
+    USER_AUTH_ID_FIELD_NUMBER: _ClassVar[int]
+    user_auth_id: str
+    def __init__(self, user_auth_id: _Optional[str] = ...) -> None: ...
+
+class GetUserDefaultTenantResponse(_message.Message):
+    __slots__ = ("error", "tenant_id")
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    TENANT_ID_FIELD_NUMBER: _ClassVar[int]
+    error: str
+    tenant_id: str
+    def __init__(self, error: _Optional[str] = ..., tenant_id: _Optional[str] = ...) -> None: ...
+
 class GetUserContactInfoRequest(_message.Message):
     __slots__ = ("user_auth_id",)
     USER_AUTH_ID_FIELD_NUMBER: _ClassVar[int]

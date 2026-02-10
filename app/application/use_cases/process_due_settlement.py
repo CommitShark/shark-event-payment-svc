@@ -66,10 +66,13 @@ class ProcessDueSettlementsUseCase:
             txn.user_id,
             lock_for_update=True,
         )
-        txn.settlement_status = "pending"
+        txn.complete_settlement()
         wallet.deposit(txn.amount)
         await wallet_repo.save(wallet)
         await txn_repo.save(txn)
 
         ev = WalletFundedEvent.create(txn)
         await event_bus.publish(ev)
+
+        for txn_ev in txn.events:
+            await event_bus.publish(txn_ev)

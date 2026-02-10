@@ -203,6 +203,7 @@ class Transaction(BaseModel):
             metadata=metadata,
             source=source,
             parent_id=parent_id,
+            delayed_settlement_until=delayed_settlement_until,
         )
 
         txn._events.append(TransactionCreatedEvent.create(txn))

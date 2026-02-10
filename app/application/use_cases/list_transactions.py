@@ -27,6 +27,7 @@ class ListTransactionUseCase:
             offset=req.offset,
             limit=req.page_size,
             user_id=req.user_id,
+            ticket_ids=req.ticket_ids,
         )
 
         return PaginatedResponseDto.create(

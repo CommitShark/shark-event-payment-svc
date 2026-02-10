@@ -96,10 +96,18 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         offset: int,
         limit: int,
         user_id: UUID,
+        ticket_ids: list[UUID],
     ) -> tuple[list[Transaction], int]:
         base_stmt = select(SqlAlchemyTransaction).where(
             SqlAlchemyTransaction.user_id == user_id
         )
+
+        if len(ticket_ids) > 0:
+            # filter query where resource = ticket and resource_id in ticket_ids
+            base_stmt = base_stmt.where(
+                SqlAlchemyTransaction.resource == "ticket",  # or ResourceType.TICKET
+                SqlAlchemyTransaction.resource_id.in_(ticket_ids),
+            )
 
         # -----------------------
         # 1. Get total count

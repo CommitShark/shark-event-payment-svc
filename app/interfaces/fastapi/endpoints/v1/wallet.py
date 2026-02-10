@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-
+from uuid import UUID
 from app.domain.dto import PersonalAccountWithSignature
 from app.application.dto.base import BaseResponseDTO
 from app.application.dto.wallet import (
@@ -40,12 +40,20 @@ async def get_transactions(
     use_case: ListUserTransactionUseCaseDep,
     page: int = Query(...),
     page_size: int = Query(...),
+    ticket_ids: str | None = Query(None),
 ):
+    uuids: list[UUID] = []
+    if ticket_ids:
+        parts = ticket_ids.split(",")
+        for part in parts:
+            uuids.append(UUID(part))
+
     req = ListUserTransactionRequestDto(
         page=page,
         page_size=page_size,
         sort_by="occurred_on",
         user_id=context.user_id,
+        ticket_ids=uuids,
     )
 
     result = await use_case.by_user(req)

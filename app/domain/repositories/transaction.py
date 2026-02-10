@@ -37,6 +37,7 @@ class ITransactionRepository(Protocol):
         offset: int,
         limit: int,
         user_id: UUID,
+        ticket_ids: list[UUID],
     ) -> tuple[List[Transaction], int]: ...
 
     @abstractmethod

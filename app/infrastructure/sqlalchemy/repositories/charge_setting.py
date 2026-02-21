@@ -1,10 +1,13 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from app.domain.entities import ChargeSetting
 from app.domain.repositories import IChargeSettingRepository
-from app.infrastructure.sqlalchemy.models import SqlAlchemyChargeSetting
+from app.infrastructure.sqlalchemy.models import (
+    SqlAlchemyChargeSetting,
+    SqlAlchemyChargeSettingVersion,
+)
 from app.shared.errors import AppError
 
 
@@ -63,3 +66,7 @@ class SqlAlchemyChargeSettingRepository(IChargeSettingRepository):
         entities = result.scalars().all()
 
         return [entity.to_domain() for entity in entities]
+
+    async def delete_all(self) -> None:
+        await self._session.execute(delete(SqlAlchemyChargeSettingVersion))
+        await self._session.execute(delete(SqlAlchemyChargeSetting))

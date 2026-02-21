@@ -31,7 +31,12 @@ class Charge(BaseModel):
 
 
 @click.command("seed:charges")
-def seed_charges():
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force reseeding of charges",
+)
+def seed_charges(force: bool):
     """Seed charges"""
 
     async def run():
@@ -54,16 +59,19 @@ def seed_charges():
                 charge_repo = get_charge_setting_repo(session)
                 charge_version_repo = get_charge_setting_version_repo(session)
 
-                existing = await charge_repo.list_all()
-
-                if len(existing) > 0:
-                    click.echo(
-                        click.style(
-                            "Charge settings table is not empty. Seed aborted",
-                            fg="yellow",
+                if force:
+                    click.echo("Forcing reseed of charges...")
+                    await charge_repo.delete_all()
+                else:
+                    existing = await charge_repo.list_all()
+                    if len(existing) > 0:
+                        click.echo(
+                            click.style(
+                                "Charge settings table is not empty. Seed aborted",
+                                fg="yellow",
+                            )
                         )
-                    )
-                    return
+                        return
 
                 for charge in charges:
                     model = ChargeSetting(

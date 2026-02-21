@@ -16,6 +16,8 @@ class GenericSettings(BaseSettings):
 
     settlement_delay_hours: int
 
+    max_wallet_balance: int
+
     debug: bool = False
 
     @field_validator("debug", mode="before")

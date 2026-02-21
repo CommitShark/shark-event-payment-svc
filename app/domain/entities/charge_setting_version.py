@@ -37,6 +37,11 @@ class PriceRangeTier(BaseModel):
         le=100,
         description="Percentage rate to apply for this tier",
     )
+    additional_charge: Optional[Decimal] = Field(
+        default=None,
+        gt=0,
+        description="Additional charge after applying percentage charge",
+    )
     min_charge: Optional[Decimal] = Field(
         default=None,
         ge=0,
@@ -49,7 +54,12 @@ class PriceRangeTier(BaseModel):
     )
 
     @field_validator(
-        "percentage_rate", "min_price", "max_price", "min_charge", "max_charge"
+        "percentage_rate",
+        "min_price",
+        "max_price",
+        "min_charge",
+        "max_charge",
+        "additional_charge",
     )
     @classmethod
     def validate_decimal_precision(cls, v: Optional[Decimal]) -> Optional[Decimal]:
@@ -104,6 +114,9 @@ class PriceRangeTier(BaseModel):
         """
         # Calculate percentage-based charge
         charge = (base_amount * self.percentage_rate / 100).quantize(Decimal("0.01"))
+
+        if self.additional_charge:
+            charge += self.additional_charge
 
         # Apply minimum cap if specified
         if self.min_charge is not None and charge < self.min_charge:

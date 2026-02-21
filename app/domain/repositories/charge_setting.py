@@ -30,3 +30,6 @@ class IChargeSettingRepository(Protocol):
     async def list_all(self, active_only: bool = True) -> list[ChargeSetting]:
         """List all charge settings"""
         ...
+
+    @abstractmethod
+    async def delete_all(self) -> None: ...

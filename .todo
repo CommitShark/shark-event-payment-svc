@@ -2,3 +2,5 @@ Add distributed cache so that service can check there for reservation before res
 get_ticket_type_charge: Can slug come from the internal req?
 Solve for duplicate transaction reference
 On successful purchase move reservation closed
+
+Updated seeded charge on live

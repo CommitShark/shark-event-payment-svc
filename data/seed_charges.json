@@ -63,5 +63,31 @@
             "created_by": "system",
             "change_reason": "Seeded charge"
         }
+    },
+    {
+        "name": "Platform Deposit Charge (NG)",
+        "charge_type": "deposit_ng",
+        "init_version": {
+            "version_number": 1,
+            "tiers": [
+                {
+                    "tier_name": "Under 2500",
+                    "min_price": "1000",
+                    "max_price": "2400",
+                    "percentage_rate": "1.55",
+                    "min_charge": "100"
+                },
+                {
+                    "tier_name": "Over 2500",
+                    "min_price": "2400.01",
+                    "percentage_rate": "1.55",
+                    "additional_charge": "100",
+                    "min_charge": "100",
+                    "max_charge": "2200"
+                }
+            ],
+            "created_by": "system",
+            "change_reason": "Seeded charge"
+        }
     }
 ]

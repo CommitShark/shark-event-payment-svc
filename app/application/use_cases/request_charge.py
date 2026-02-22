@@ -38,6 +38,8 @@ class RequestChargeUseCase:
             )
         elif charge_type == "instant_withdrawal_ng":
             return await self.instant_withdrawal_charge(user_id, amount)
+        elif charge_type == "deposit_ng":
+            return await self.deposit_charge(user_id, amount)
 
         raise AppError("Unsupported charge type requested", 400)
 
@@ -97,6 +99,44 @@ class RequestChargeUseCase:
             raise AppError("Amount is required", 422)
 
         charge = await self._charge_repo.get_by_type("instant_withdrawal_ng")
+
+        charge_data = await self._charge_calc_service.get_charge_breakdown(
+            charge_setting_id=charge.charge_setting_id,
+            base_amount=amount,
+        )
+
+        if not charge_data:
+            raise AppError(
+                "Failed to generate charge data.",
+                500,
+                error_code=ErrorCodes.COULD_NOT_GENERATE_CHARGE,
+            )
+
+        payload = {
+            "base_amount": charge_data["base_amount"],
+            "charge_setting_id": charge_data["charge_setting_id"],
+            "version_id": charge_data["version_id"],
+            "version_number": charge_data["version_number"],
+            "calculated_charge": charge_data["calculated_charge"],
+            "user": user_id,
+        }
+
+        signature = sign_payload(payload, settings.charge_req_key)
+
+        return {
+            **charge_data,
+            "signature": signature,
+        }
+
+    async def deposit_charge(
+        self,
+        user_id: str,
+        amount: Optional[Decimal] = None,
+    ):
+        if not amount:
+            raise AppError("Amount is required", 422)
+
+        charge = await self._charge_repo.get_by_type("deposit_ng")
 
         charge_data = await self._charge_calc_service.get_charge_breakdown(
             charge_setting_id=charge.charge_setting_id,

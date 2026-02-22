@@ -36,7 +36,7 @@ class CreateAttendeeDepositCheckoutUseCase:
         wallet.confirm_can_deposit(amount, settings.max_attendee_wallet_balance)
 
         payload = {
-            "amount": str(amount),
+            "base_amount": str(amount),
             "charge_setting_id": charge_setting_id,
             "version_id": version_id,
             "version_number": version_number,

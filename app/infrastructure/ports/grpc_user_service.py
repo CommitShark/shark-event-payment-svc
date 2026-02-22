@@ -49,3 +49,13 @@ class GrpcUserService(IUserService):
         if grpc_res.error.strip():
             raise AppError(grpc_res.error, 500)
         return grpc_res.user_id
+
+    @cb
+    async def get_email(self, user_id: str) -> str:
+        grpc_res = await self._user_stub.GetUserContactInfo(
+            user_pb2.GetUserContactInfoRequest(user_auth_id=user_id)
+        )
+        grpc_res = cast(user_pb2.GetUserContactInfoResponse, grpc_res)
+        if grpc_res.error.strip():
+            raise AppError(grpc_res.error, 500)
+        return grpc_res.email

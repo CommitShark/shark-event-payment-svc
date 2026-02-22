@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from app.shared.errors import AppError, ErrorCodes
 import bcrypt  # type: ignore
 
+from app.config import settings
+from app.utils.money_utils import format_currency
 from .value_objects import BankDetails
 
 
@@ -52,6 +54,7 @@ class Wallet(BaseModel):
         """Instant deposit to available balance."""
         if amount <= 0:
             raise ValueError("Deposit amount must be positive")
+
         self.balance += amount
 
     def withdraw(self, amount: Decimal):
@@ -112,3 +115,25 @@ class Wallet(BaseModel):
             )
 
         self.set_pin(new_pin)
+
+    def confirm_can_deposit(
+        self, amount: Decimal, max_balance: Optional[Decimal] = None
+    ):
+        if not max_balance:
+            return
+
+        total_proposed = self.balance + self.pending_balance + amount
+        if total_proposed > max_balance:
+            excess = total_proposed - max_balance
+
+            raise AppError(
+                (
+                    f"Deposit would exceed the maximum wallet balance. "
+                    f"Current balance: {format_currency(self.balance)}. "
+                    f"Pending balance: {format_currency(self.pending_balance)}. "
+                    f"Attempted deposit: {format_currency(amount)}. "
+                    f"Maximum allowed balance: {format_currency(max_balance)}. "
+                    f"Exceeds limit by: {format_currency(excess)}."
+                ),
+                422,
+            )

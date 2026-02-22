@@ -15,8 +15,8 @@ from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyTransactionRepository,
     SqlAlchemyWalletRepository,
 )
-from app.domain.ports import IPaymentAdapter, IEventBus
-from app.infrastructure.ports import GrpcTicketService
+from app.domain.ports import IPaymentAdapter, IEventBus, IUserService
+from app.infrastructure.ports import GrpcTicketService, GrpcUserService
 from app.domain.services import ChargeCalculationService
 from app.application.use_cases import (
     RequestChargeUseCase,
@@ -29,6 +29,7 @@ from app.application.use_cases import (
     ListBanksUseCase,
     SaveBankUseCase,
     SubmitWithdrawalUseCase,
+    CreateAttendeeDepositCheckoutUseCase,
 )
 from app.infrastructure.grpc import grpc_client
 
@@ -226,4 +227,22 @@ def get_SubmitWithdrawalUseCase(
 SubmitWithdrawalUseCaseDep = Annotated[
     SubmitWithdrawalUseCase,
     Depends(get_SubmitWithdrawalUseCase),
+]
+
+
+def get_CreateAttendeeDepositCheckoutUseCase(
+    wallet_repo: WalletRepoDep,
+    payment_adapter: PaymentAdapterDep,
+):
+    stub = grpc_client.get_user_grpc_stub()
+    return CreateAttendeeDepositCheckoutUseCase(
+        wallet_repo,
+        payment_adapter,
+        GrpcUserService(stub),
+    )
+
+
+CreateAttendeeDepositCheckoutUseCaseDep = Annotated[
+    CreateAttendeeDepositCheckoutUseCase,
+    Depends(get_CreateAttendeeDepositCheckoutUseCase),
 ]

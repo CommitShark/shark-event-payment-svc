@@ -3,6 +3,7 @@ from fastapi import APIRouter
 
 from app.application.dto.checkout import (
     CreateCheckoutReqDto,
+    CreateAttendeeCheckoutReqDto,
     CreateCheckoutResDto,
     VerifyTicketPurchaseReqDto,
     VerifyTicketPurchaseResDto,
@@ -10,10 +11,37 @@ from app.application.dto.checkout import (
 from app.interfaces.fastapi.context import UserContextDep, ProtectedDep
 from app.interfaces.fastapi.di import (
     CreateCheckoutUseCaseDep,
+    CreateAttendeeDepositCheckoutUseCaseDep,
     VerifyTicketPurchaseTransactionUseCaseDep,
 )
 
 router = APIRouter(prefix="/v1/checkout", tags=["Checkout"])
+
+
+@router.post(
+    "/attendee-deposit",
+    response_model=CreateCheckoutResDto,
+    description="Generate payment link for attendee wallet deposit",
+)
+async def attendee_deposit(
+    _: ProtectedDep,
+    context: UserContextDep,
+    use_case: CreateAttendeeDepositCheckoutUseCaseDep,
+    req: CreateAttendeeCheckoutReqDto,
+):
+    link = await use_case.execute(
+        amount=req.amount,
+        calculated_charge=req.calculated_charge,
+        charge_setting_id=req.charge_setting_id,
+        signature=req.signature,
+        user_id=context.user_id,
+        version_id=req.version_id,
+        version_number=req.version_number,
+    )
+
+    return CreateCheckoutResDto(
+        link=link,
+    )
 
 
 @router.post(

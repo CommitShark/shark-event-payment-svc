@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
@@ -16,7 +17,7 @@ class GenericSettings(BaseSettings):
 
     settlement_delay_hours: int
 
-    max_wallet_balance: int
+    max_attendee_wallet_balance: Decimal
 
     debug: bool = False
 

@@ -11,3 +11,6 @@ class IUserService(Protocol):
 
     @abstractmethod
     async def get_referral_info(self, user_id: str) -> Optional[str]: ...
+
+    @abstractmethod
+    async def get_email(self, user_id: str) -> str: ...

@@ -4,3 +4,6 @@ Solve for duplicate transaction reference
 On successful purchase move reservation closed
 
 Updated seeded charge on live
+Update wallet for org to be owned by workspace, not individual
+
+/public/checkout should only be allowed when referrer is purchase modal 

@@ -38,6 +38,10 @@ class CreateCheckoutReqDto(BaseModel):
     quantity: int
 
 
+class PublicCreateCheckoutReqDto(CreateCheckoutReqDto):
+    user_auth_id: str
+
+
 class CreateAttendeeCheckoutReqDto(BaseModel):
     charge_setting_id: str
     version_id: str
@@ -53,6 +57,10 @@ class CreateCheckoutResDto(BaseModel):
 
 class VerifyTicketPurchaseReqDto(BaseModel):
     reference: str
+
+
+class PublicVerifyTicketPurchaseReqDto(VerifyTicketPurchaseReqDto):
+    user_auth_id: str
 
 
 class VerifyTicketPurchaseResDto(BaseModel):

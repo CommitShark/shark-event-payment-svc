@@ -22,7 +22,7 @@ from app.infrastructure.ports.paystack_adapter import (
     dispose_PaystackAdapter,
 )
 from app.application.event_handlers import TransactionEventHandler
-from .endpoints.v1 import charges, checkout, wallet, webhook
+from .endpoints.v1 import charges, checkout, wallet, webhook, public
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +108,7 @@ def create_app() -> FastAPI:
     app.include_router(checkout.router)
     app.include_router(wallet.router)
     app.include_router(webhook.router)
+    app.include_router(public.router)
 
     logger.info(
         "FastAPI application created with root path: %s",

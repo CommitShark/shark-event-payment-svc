@@ -25,7 +25,7 @@ class VerifyTicketPurchaseTransactionUseCase:
         self._txn_repo = txn_repo
         self._event_bus = event_bus
 
-    async def execute(self, reference: str, user_id: UUID):
+    async def execute(self, reference: str, user_id: UUID | None = None):
         # Check if transaction reference has already been recorded
         existing_txn = await self._txn_repo.get_by_reference_or_none(UUID(reference))
 
@@ -77,7 +77,7 @@ class VerifyTicketPurchaseTransactionUseCase:
             metadata=metadata,
         )
 
-        if user_id != txn.user_id:
+        if user_id and user_id != txn.user_id:
             logger.debug(
                 f"User mismatch. \nOriginal User = {txn.user_id} \nUser Attempting Validation = {user_id}"
             )

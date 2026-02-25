@@ -36,6 +36,7 @@ class CreateCheckoutReqDto(BaseModel):
     email: EmailStr
     signature: str
     quantity: int
+    base_amount: Decimal
 
 
 class PublicCreateCheckoutReqDto(CreateCheckoutReqDto):

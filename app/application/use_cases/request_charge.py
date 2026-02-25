@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from typing import Optional
 
@@ -82,6 +83,8 @@ class RequestChargeUseCase:
             "slug": slug,
             "quantity": quantity,
         }
+
+        print(f"signed payload {json.dumps(payload)}")
 
         signature = sign_payload(payload, settings.charge_req_key)
 

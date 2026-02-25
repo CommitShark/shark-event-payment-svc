@@ -67,6 +67,7 @@ async def ticket_purchase(
         slug=req.slug,
         signature=req.signature,
         quantity=req.quantity,
+        base_amount=req.base_amount,
     )
 
     return CreateCheckoutResDto(

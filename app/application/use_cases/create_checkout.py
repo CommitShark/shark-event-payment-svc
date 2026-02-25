@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from app.config import settings
 from app.utils.signing import sign_payload
@@ -28,6 +29,7 @@ class CreateCheckoutUseCase:
         email: str,
         signature: str,
         quantity: int,
+        base_amount: Decimal,
     ):
         is_valid, error = await self._ticket_service.reservation_is_valid(
             reservation_id
@@ -35,8 +37,6 @@ class CreateCheckoutUseCase:
 
         if not is_valid:
             raise AppError(error or "Invalid or expired reservation", 400)
-
-        base_amount = await self._ticket_service.get_ticket_price(ticket_type_id)
 
         payload = {
             "base_amount": str(base_amount),
@@ -49,7 +49,10 @@ class CreateCheckoutUseCase:
             "slug": slug,
             "quantity": quantity,
         }
+
         expected_signature = sign_payload(payload, settings.charge_req_key)
+
+        print(f"expected = {expected_signature} sig = {signature}")
 
         if expected_signature != signature:
             raise AppError("Invalid or malformed request", 400)

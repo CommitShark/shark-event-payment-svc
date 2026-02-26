@@ -31,6 +31,15 @@ class SubmitWithdrawalUseCase:
         amount: Decimal,
         signature: str | None,
     ):
+        if (
+            charge_setting_id is None
+            or version_id is None
+            or version_number is None
+            or calculated_charge is None
+            or signature is None
+        ) and settings.disable_withdrawal_charges == 0:
+            raise AppError("Invalid request", 400)
+
         wallet = await self._wallet_repo.get_by_user_or_create(
             UUID(user_id),
             lock_for_update=True,

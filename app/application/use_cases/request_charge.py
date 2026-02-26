@@ -126,6 +126,9 @@ class RequestChargeUseCase:
 
         signature = sign_payload(payload, settings.charge_req_key)
 
+        if settings.disable_withdrawal_charges == 1:
+            return None
+
         return {
             **charge_data,
             "signature": signature,

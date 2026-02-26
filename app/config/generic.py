@@ -19,6 +19,8 @@ class GenericSettings(BaseSettings):
 
     max_attendee_wallet_balance: Decimal
 
+    disable_withdrawal_charges: int = 1
+
     debug: bool = False
 
     @field_validator("debug", mode="before")

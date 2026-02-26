@@ -23,13 +23,13 @@ class SubmitWithdrawalUseCase:
 
     async def execute(
         self,
-        charge_setting_id: str,
-        version_id: str,
-        version_number: int,
-        calculated_charge: str,
+        charge_setting_id: str | None,
+        version_id: str | None,
+        version_number: int | None,
+        calculated_charge: str | None,
         user_id: str,
         amount: Decimal,
-        signature: str,
+        signature: str | None,
     ):
         wallet = await self._wallet_repo.get_by_user_or_create(
             UUID(user_id),
@@ -37,7 +37,7 @@ class SubmitWithdrawalUseCase:
         )
 
         if not wallet.has_withdrawable_amount(
-            Decimal(amount) + Decimal(calculated_charge)
+            Decimal(amount) + Decimal(calculated_charge or "0")
         ):
             raise AppError("Insufficient balance", 400)
 
@@ -55,28 +55,42 @@ class SubmitWithdrawalUseCase:
                 error_code=ErrorCodes.NO_TXN_PIN,
             )
 
-        payload = {
-            "base_amount": str(amount),
-            "charge_setting_id": charge_setting_id,
-            "version_id": version_id,
-            "version_number": version_number,
-            "calculated_charge": calculated_charge,
-            "user": user_id,
-        }
+        if (
+            charge_setting_id
+            and version_id
+            and version_number
+            and calculated_charge
+            and signature
+        ):
+            payload = {
+                "base_amount": str(amount),
+                "charge_setting_id": charge_setting_id,
+                "version_id": version_id,
+                "version_number": version_number,
+                "calculated_charge": calculated_charge,
+                "user": user_id,
+            }
 
-        expected_signature = sign_payload(payload, settings.charge_req_key)
+            expected_signature = sign_payload(payload, settings.charge_req_key)
 
-        if expected_signature != signature:
-            raise AppError("Invalid or malformed request", 400)
+            if expected_signature != signature:
+                raise AppError("Invalid or malformed request", 400)
 
         txn = Transaction.create(
             amount=amount,
-            charge_data=ChargeData(
-                charge_setting_id=charge_setting_id,
-                charge_amount=Decimal(calculated_charge),
-                sponsored=False,
-                version_id=version_id,
-                version_number=version_number,
+            charge_data=(
+                ChargeData(
+                    charge_setting_id=charge_setting_id,
+                    charge_amount=Decimal(calculated_charge),
+                    sponsored=False,
+                    version_id=version_id,
+                    version_number=version_number,
+                )
+                if charge_setting_id
+                and calculated_charge
+                and version_id
+                and version_number
+                else None
             ),
             occurred_on=datetime.now(timezone.utc),
             reference=uuid4(),
@@ -88,7 +102,7 @@ class SubmitWithdrawalUseCase:
             user_id=UUID(user_id),
         )
 
-        wallet.withdraw(Decimal(amount) + Decimal(calculated_charge))
+        wallet.withdraw(Decimal(amount) + Decimal(calculated_charge or "0"))
 
         await self._txn_repo.save(txn)
         await self._wallet_repo.save(wallet)

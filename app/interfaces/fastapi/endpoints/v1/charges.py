@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query
 from decimal import Decimal
+from typing import Optional
 from app.application.dto.charge_request import GetChargeResDto
 
 from app.interfaces.fastapi.context import UserContextDep, ProtectedDep
@@ -28,7 +29,7 @@ async def get_ticket_type_charge(
     return result
 
 
-@router.get("/instant-withdrawal", response_model=GetChargeResDto)
+@router.get("/instant-withdrawal", response_model=Optional[GetChargeResDto])
 async def get_instant_withdrawal_charge(
     _: ProtectedDep,
     context: UserContextDep,

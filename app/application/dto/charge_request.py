@@ -9,9 +9,9 @@ class GetChargeReqDto(BaseModel):
 
 class GetChargeResDto(BaseModel):
     base_amount: Decimal
-    charge_setting_id: str
-    version_id: str
-    version_number: int
-    calculated_charge: str
-    percentage_rate: str
-    signature: str
+    charge_setting_id: str | None = None
+    version_id: str | None = None
+    version_number: int | None = None
+    calculated_charge: str | None = None
+    percentage_rate: str | None = None
+    signature: str | None = None

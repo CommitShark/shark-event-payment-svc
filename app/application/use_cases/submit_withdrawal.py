@@ -4,7 +4,7 @@ from decimal import Decimal
 from app.domain.repositories import IWalletRepository, ITransactionRepository
 from app.config import settings
 from app.utils.signing import sign_payload
-from app.shared.errors import AppError
+from app.shared.errors import AppError, ErrorCodes
 from app.domain.entities import Transaction
 from app.domain.entities.value_objects import ChargeData
 from app.domain.ports import IEventBus
@@ -36,8 +36,24 @@ class SubmitWithdrawalUseCase:
             lock_for_update=True,
         )
 
-        if not wallet.can_withdraw(Decimal(amount) + Decimal(calculated_charge)):
+        if not wallet.has_withdrawable_amount(
+            Decimal(amount) + Decimal(calculated_charge)
+        ):
             raise AppError("Insufficient balance", 400)
+
+        if not wallet.has_bank_details:
+            raise AppError(
+                "Please setup your withdrawal account details before attempting to withdraw",
+                400,
+                error_code=ErrorCodes.NO_WITHDRAW_ACCOUNT,
+            )
+
+        if not wallet.has_pin:
+            raise AppError(
+                "Please set your transaction pin before attempting to withdraw",
+                400,
+                error_code=ErrorCodes.NO_TXN_PIN,
+            )
 
         payload = {
             "base_amount": str(amount),

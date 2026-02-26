@@ -32,6 +32,10 @@ class Wallet(BaseModel):
     def has_pin(self):
         return self.txn_pin is not None
 
+    @property
+    def has_bank_details(self):
+        return self.bank_details is not None
+
     def set_bank_details(
         self,
         bank_name: str,
@@ -47,7 +51,7 @@ class Wallet(BaseModel):
             updated_at=datetime.now(timezone.utc),
         )
 
-    def can_withdraw(self, amount: Decimal) -> bool:
+    def has_withdrawable_amount(self, amount: Decimal) -> bool:
         return self.balance >= amount
 
     def deposit(self, amount: Decimal):
@@ -61,7 +65,7 @@ class Wallet(BaseModel):
         """Withdraw immediately from available balance."""
         if amount <= 0:
             raise ValueError("Withdrawal amount must be positive")
-        if not self.can_withdraw(amount):
+        if not self.has_withdrawable_amount(amount):
             raise ValueError("Insufficient balance")
         self.balance -= amount
 
@@ -72,7 +76,7 @@ class Wallet(BaseModel):
         """
         if amount <= 0:
             raise ValueError("Hold amount must be positive")
-        if not self.can_withdraw(amount):
+        if not self.has_withdrawable_amount(amount):
             raise ValueError("Insufficient balance to hold funds")
         self.balance -= amount
         self.pending_balance += amount

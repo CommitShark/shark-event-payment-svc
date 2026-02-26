@@ -36,7 +36,7 @@ class UpdateTransactionStatusUseCase:
 
             if mode != "manual":
                 err = f"Invalid transaction mode {mode}"
-                logger.debug(err)
+                print(f"Error: {err}")
                 raise AppError(err, 400)
 
             refundable_amount = txn.mark_as_failed(req.reason)

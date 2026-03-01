@@ -6,7 +6,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ValidationError
 from datetime import datetime
 from uuid import UUID
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Optional, Dict, Any
 
 from app.config import settings, paystack_config
 from app.domain.ports import IPaymentAdapter
@@ -118,6 +118,45 @@ class PaystackTransferSuccessEvent(BaseModel):
     transferred_at: str | None
     updatedAt: str
     recipient: PaystackRecipient
+
+
+class Customer(BaseModel):
+    id: int
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: str
+    customer_code: str
+    phone: Optional[str]
+    metadata: Dict[str, Any]
+    risk_action: str
+    international_format_phone: Optional[str]
+
+
+class ChargeData(BaseModel):
+    id: int
+    domain: str
+    status: str
+    reference: str
+    amount: Decimal
+    message: Optional[str]
+    gateway_response: Optional[str]
+    paid_at: Optional[datetime]
+    created_at: datetime
+    channel: str
+    currency: str
+    ip_address: Optional[str]
+
+    metadata: Optional[Dict[str, Any]]
+    customer: Customer
+
+    plan: Dict[str, Any]
+    subaccount: Dict[str, Any]
+    split: Dict[str, Any]
+
+    order_id: Optional[str]
+    paidAt: Optional[datetime]
+    requested_amount: Optional[int]
+    pos_transaction_data: Optional[Any]
 
 
 class PaystackEvent(BaseModel, Generic[T]):

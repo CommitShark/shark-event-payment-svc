@@ -23,6 +23,8 @@ class DepositCheckoutMetaData(BaseModel):
     sponsored: bool
     user: str
     signature: str
+    action: str
+    amount: str
 
 
 class CreateCheckoutReqDto(BaseModel):

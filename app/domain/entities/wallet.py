@@ -121,7 +121,9 @@ class Wallet(BaseModel):
         self.set_pin(new_pin)
 
     def confirm_can_deposit(
-        self, amount: Decimal, max_balance: Optional[Decimal] = None
+        self,
+        amount: Decimal,
+        max_balance: Optional[Decimal] = None,
     ):
         if not max_balance:
             return

@@ -43,3 +43,19 @@ async def get_instant_withdrawal_charge(
     )
 
     return result
+
+
+@router.get("/deposit", response_model=Optional[GetChargeResDto])
+async def get_deposit_charge(
+    _: ProtectedDep,
+    context: UserContextDep,
+    use_case: RequestChargeUseCaseDep,
+    amount: Decimal = Query(...),
+):
+    result = await use_case.execute(
+        user_id=str(context.user_id),
+        charge_type="deposit_ng",
+        amount=amount,
+    )
+
+    return result

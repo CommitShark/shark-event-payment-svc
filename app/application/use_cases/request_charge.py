@@ -142,6 +142,9 @@ class RequestChargeUseCase:
         if not amount:
             raise AppError("Amount is required", 422)
 
+        if amount < Decimal("100"):
+            raise AppError("Minimum deposit amount is 100 naira", 400)
+
         charge = await self._charge_repo.get_by_type("deposit_ng")
 
         charge_data = await self._charge_calc_service.get_charge_breakdown(

@@ -33,13 +33,13 @@ class PriceRangeTier(BaseModel):
         description="Maximum price for this tier (inclusive, None for unlimited)",
     )
     percentage_rate: Decimal = Field(
-        gt=0,
+        ge=0,
         le=100,
         description="Percentage rate to apply for this tier",
     )
     additional_charge: Optional[Decimal] = Field(
         default=None,
-        gt=0,
+        ge=0,
         description="Additional charge after applying percentage charge",
     )
     min_charge: Optional[Decimal] = Field(
@@ -113,7 +113,11 @@ class PriceRangeTier(BaseModel):
             The calculated charge amount after applying percentage and caps
         """
         # Calculate percentage-based charge
-        charge = (base_amount * self.percentage_rate / 100).quantize(Decimal("0.01"))
+        charge = (
+            (base_amount * self.percentage_rate / 100).quantize(Decimal("0.01"))
+            if self.percentage_rate > 0
+            else Decimal("0.00")
+        )
 
         if self.additional_charge:
             charge += self.additional_charge

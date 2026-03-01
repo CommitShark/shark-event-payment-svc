@@ -1,21 +1,20 @@
 import logging
-import asyncio
 from uuid import UUID
 from typing import cast
-from decimal import Decimal, ROUND_HALF_UP
-from datetime import datetime, timezone, timedelta
+from decimal import Decimal
+from datetime import datetime, timezone
 
 from app.config import settings
 from app.domain.repositories import ITransactionRepository, IWalletRepository
 from app.domain.ports import ITicketService, IUserService, IEventBus
 from app.domain.entities import Transaction
-from app.domain.entities.value_objects import SettlementData
 from app.domain.events import (
     TransactionCreatedEvent,
     TransactionCreatedPayload,
     WalletFundedEvent,
     CompleteWithdrawEvent,
     NotifyEvent,
+    CompleteFundingEvent,
 )
 from app.application.use_cases import SettleTicketPurchaseUseCase
 from app.domain.events.base import DomainEvent
@@ -41,6 +40,7 @@ class TransactionEventHandler(IEventHandler):
     events = [
         TransactionCreatedEvent,
         CompleteWithdrawEvent,
+        CompleteFundingEvent,
     ]
 
     async def handle(self, event: DomainEvent):
@@ -48,8 +48,55 @@ class TransactionEventHandler(IEventHandler):
             await self._process_transaction_created(event)
         elif isinstance(event, CompleteWithdrawEvent):
             await self._process_withdrawal_completion(event)
+        elif isinstance(event, CompleteFundingEvent):
+            await self._process_funding_completion(event)
         else:
             logger.warning(f"Unhandled event type: {type(event).__name__}")
+
+    async def _process_funding_completion(self, ev: CompleteFundingEvent):
+        logger.debug(f"Processing funding completion AGG ID: {ev.aggregate_id}")
+
+        async with session_context() as session:
+            txn_repo = get_txn_repo(session)
+            wallet_repo = get_wallet_repo(session)
+            event_bus = get_event_bus()
+
+            payload = ev.payload
+
+            txn = await txn_repo.get_by_reference_or_none(UUID(payload.ref))
+
+            if not txn:
+                raise AppError(f"Transaction {payload.ref} not found", 404)
+
+            logger.debug(f"Transaction with ref {payload.ref} found")
+
+            if txn.settlement_status != "pending":
+                logger.debug(
+                    f"Transaction with ref {payload.ref} is no longer pending, status is {txn.settlement_status}",
+                )
+                return
+
+            if txn.transaction_type != "wallet_funding":
+                logger.debug(
+                    f"Transaction with ref {payload.ref} is not a funding transaction, type={txn.transaction_type}",
+                )
+                return
+
+            expected_amount_paid = (
+                txn.amount + txn.charge_data.charge_amount
+                if txn.charge_data and not txn.charge_data.sponsored
+                else Decimal("0")
+            )
+
+            if expected_amount_paid != payload.amount_paid:
+                raise AppError(f"Expected amount does not match amount paid", 500)
+
+            await self._fund_account_from_txn(
+                txn=txn,
+                txn_repo=txn_repo,
+                wallet_repo=wallet_repo,
+                event_bus=event_bus,
+            )
 
     async def _process_withdrawal_completion(self, ev: CompleteWithdrawEvent):
         logger.debug(f"Processing withdrawal completion AGG ID: {ev.aggregate_id}")
@@ -119,9 +166,20 @@ class TransactionEventHandler(IEventHandler):
             logger.debug(f"Transaction with ref {payload.reference} found")
 
             if txn.settlement_status != "pending":
-                logger.debug(
-                    f"Transaction with ref {payload.reference} is no longer pending, status is {txn.settlement_status}",
-                )
+                if (
+                    txn.settlement_status == "completed"
+                    and txn.transaction_type == "wallet_funding"
+                ):
+                    await self._fund_account_from_txn(
+                        txn=txn,
+                        txn_repo=txn_repo,
+                        wallet_repo=wallet_repo,
+                        event_bus=event_bus,
+                    )
+                else:
+                    logger.debug(
+                        f"Transaction with ref {payload.reference} is no longer pending, status is {txn.settlement_status}",
+                    )
                 return
 
             if txn.transaction_type == "purchase":
@@ -135,11 +193,7 @@ class TransactionEventHandler(IEventHandler):
                     )
                 else:
                     raise AppError(f"{txn} not implemented", 500)
-            elif (
-                txn.transaction_type == "sale"
-                or txn.transaction_type == "commission"
-                or txn.transaction_type == "wallet_funding"
-            ):
+            elif txn.transaction_type == "sale" or txn.transaction_type == "commission":
                 await self._fund_account_from_txn(
                     txn=txn,
                     txn_repo=txn_repo,
@@ -249,7 +303,11 @@ class TransactionEventHandler(IEventHandler):
             txn.user_id,
             lock_for_update=True,
         )
-        txn.settlement_status = "pending"
+
+        if txn.transaction_type == "wallet_funding":
+            wallet.confirm_can_deposit(txn.amount, settings.max_attendee_wallet_balance)
+
+        txn.complete_settlement()
         wallet.deposit(txn.amount)
         await wallet_repo.save(wallet)
         await txn_repo.save(txn)

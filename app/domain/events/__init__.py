@@ -3,6 +3,7 @@ from .purchase_settled import PurchaseSettledEvent, PurchaseSettledPayload
 from .wallet_funded import WalletFundedEvent, WalletFundedPayload
 from .notify import NotifyEvent
 from .complete_withdraw import CompleteWithdrawEvent, CompleteWithdrawPayload
+from .complete_funding import CompleteFundingEvent
 
 __all__ = [
     "TransactionCreatedEvent",
@@ -14,4 +15,5 @@ __all__ = [
     "NotifyEvent",
     "CompleteWithdrawEvent",
     "CompleteWithdrawPayload",
+    "CompleteFundingEvent",
 ]

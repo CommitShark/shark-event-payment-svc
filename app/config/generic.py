@@ -19,7 +19,7 @@ class GenericSettings(BaseSettings):
 
     max_attendee_wallet_balance: Decimal
 
-    disable_withdrawal_charges: int = 1
+    disable_withdrawal_charges: int = 0
 
     debug: bool = False
 

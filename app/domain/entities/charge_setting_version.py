@@ -5,10 +5,12 @@ from pydantic import (
     model_validator,
     field_serializer,
 )
+from enum import Enum
 from typing import Optional
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID, uuid4
+from app.shared.errors import AppError
 
 
 # === Value Objects ===
@@ -133,6 +135,16 @@ class PriceRangeTier(BaseModel):
         return charge
 
 
+class TierOverlapStrategy(str, Enum):
+    """Strategy for handling overlapping tiers"""
+
+    SUM = "sum"  # Sum charges from all applicable tiers
+    HIGHEST = "highest"  # Use the highest charge
+    LOWEST = "lowest"  # Use the lowest charge
+    FIRST = "first"  # Use the first applicable tier (order matters)
+    LAST = "last"  # Use the last applicable tier (order matters)
+
+
 class ChargeSettingVersion(BaseModel):
     """
     Entity representing a single version of charge settings with tiered pricing.
@@ -146,6 +158,16 @@ class ChargeSettingVersion(BaseModel):
     tiers: list[PriceRangeTier] = Field(
         min_length=1,
         description="List of pricing tiers, should cover all price ranges",
+    )
+
+    allow_overlap: bool = Field(
+        default=False,
+        description="Whether tiers can overlap (multiple tiers can apply to the same price)",
+    )
+
+    overlap_strategy: Optional[TierOverlapStrategy] = Field(
+        default=None,
+        description="Strategy for handling overlapping tiers (required if allow_overlap=True)",
     )
 
     # Metadata
@@ -163,14 +185,41 @@ class ChargeSettingVersion(BaseModel):
 
     @model_validator(mode="after")
     def validate_tiers(self):
-        """Ensure tiers don't overlap and are properly ordered"""
+        """Validate tiers based on overlap setting"""
         if len(self.tiers) == 0:
             raise ValueError("At least one tier is required")
 
-        # Sort tiers by min_price
+        # Sort tiers by min_price for consistent processing
         sorted_tiers = sorted(self.tiers, key=lambda t: t.min_price)
 
-        # Check for gaps and overlaps
+        if not self.allow_overlap:
+            # Strict validation: no overlaps or gaps
+            self._validate_no_overlaps(sorted_tiers)
+        else:
+            # Validate overlap strategy is specified
+            if self.overlap_strategy is None:
+                raise ValueError(
+                    "overlap_strategy must be specified when allow_overlap=True"
+                )
+
+            # Validate based on strategy
+            self._validate_with_overlaps(sorted_tiers)
+
+        # Update tiers to be sorted
+        self.tiers = sorted_tiers
+
+        return self
+
+    def _validate_with_overlaps(self, sorted_tiers: list[PriceRangeTier]):
+        """Validate tiers when overlaps are allowed"""
+        # For SUM strategy, ensure tiers are compatible
+        if self.overlap_strategy == TierOverlapStrategy.SUM:
+            # Check for circular dependencies or impossible combinations
+            # (e.g., no additional validation needed for now)
+            pass
+
+    def _validate_no_overlaps(self, sorted_tiers: list[PriceRangeTier]):
+        """Validate that tiers don't overlap and have no gaps"""
         for i in range(len(sorted_tiers)):
             current = sorted_tiers[i]
 
@@ -202,11 +251,6 @@ class ChargeSettingVersion(BaseModel):
                         f"Last tier should have max_price=None for unlimited upper bound"
                     )
 
-        # Update tiers to be sorted
-        self.tiers = sorted_tiers
-
-        return self
-
     @model_validator(mode="after")
     def validate_effective_dates(self):
         """Ensure effective_until is after effective_from"""
@@ -219,14 +263,27 @@ class ChargeSettingVersion(BaseModel):
 
     def find_tier(self, base_amount: Decimal) -> Optional[PriceRangeTier]:
         """Find the appropriate tier for a given amount"""
+
+        if self.allow_overlap:
+            raise AppError("Charge can have more than one tiers that match", 500)
+
         for tier in self.tiers:
             if tier.applies_to(base_amount):
                 return tier
+
         return None
+
+    def find_applicable_tiers(self, base_amount: Decimal) -> list[PriceRangeTier]:
+        """Find all tiers that apply to a given amount"""
+        applicable = []
+        for tier in self.tiers:
+            if tier.applies_to(base_amount):
+                applicable.append(tier)
+        return applicable
 
     def calculate_charge(self, base_amount: Decimal) -> Decimal:
         """
-        Calculate the charge for a given base amount using the appropriate tier.
+        Calculate the charge for a given base amount using the appropriate tier(s).
 
         Args:
             base_amount: The ticket price or base amount to calculate charge on
@@ -235,17 +292,58 @@ class ChargeSettingVersion(BaseModel):
             The calculated charge amount
 
         Raises:
-            ValueError: If no tier applies to the given amount
+            ValueError: If no tier applies to the given amount or if overlapping
+                       tiers are misconfigured
         """
         if base_amount < 0:
             raise ValueError("base_amount must be non-negative")
 
-        tier = self.find_tier(base_amount)
+        applicable_tiers = self.find_applicable_tiers(base_amount)
 
-        if tier is None:
+        if not applicable_tiers:
             raise ValueError(f"No tier found for amount: {base_amount}")
 
-        return tier.calculate_charge(base_amount)
+        if len(applicable_tiers) == 1 or not self.allow_overlap:
+            # Single tier case (or overlaps not allowed)
+            return applicable_tiers[0].calculate_charge(base_amount)
+
+        # Multiple tiers case with overlaps allowed
+        return self._calculate_overlapping_charge(applicable_tiers, base_amount)
+
+    def _calculate_overlapping_charge(
+        self, applicable_tiers: list[PriceRangeTier], base_amount: Decimal
+    ) -> Decimal:
+        """Calculate charge when multiple tiers apply"""
+
+        if self.overlap_strategy == TierOverlapStrategy.SUM:
+            # Sum charges from all applicable tiers
+            total = Decimal("0.00")
+            for tier in applicable_tiers:
+                total += tier.calculate_charge(base_amount)
+            return total
+
+        elif self.overlap_strategy == TierOverlapStrategy.HIGHEST:
+            # Take the highest charge
+            charges = [t.calculate_charge(base_amount) for t in applicable_tiers]
+            return max(charges)
+
+        elif self.overlap_strategy == TierOverlapStrategy.LOWEST:
+            # Take the lowest charge
+            charges = [t.calculate_charge(base_amount) for t in applicable_tiers]
+            return min(charges)
+
+        elif self.overlap_strategy == TierOverlapStrategy.FIRST:
+            # Take the first applicable tier (based on min_price)
+            applicable_tiers.sort(key=lambda t: t.min_price)
+            return applicable_tiers[0].calculate_charge(base_amount)
+
+        elif self.overlap_strategy == TierOverlapStrategy.LAST:
+            # Take the last applicable tier (highest min_price)
+            applicable_tiers.sort(key=lambda t: t.min_price, reverse=True)
+            return applicable_tiers[0].calculate_charge(base_amount)
+
+        else:
+            raise ValueError(f"Unknown overlap strategy: {self.overlap_strategy}")
 
     def is_active(self, at_time: Optional[datetime] = None) -> bool:
         """Check if this version is active at a given time"""

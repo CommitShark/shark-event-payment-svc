@@ -72,24 +72,45 @@ class ChargeCalculationService:
         if version is None:
             return None
 
-        tier = version.find_tier(base_amount)
+        if not version.allow_overlap:
+            tier = version.find_tier(base_amount)
 
-        if tier is None:
-            return None
+            if tier is None:
+                return None
 
-        charge = tier.calculate_charge(base_amount)
+            charge = tier.calculate_charge(base_amount)
 
-        return {
-            "base_amount": str(base_amount),
-            "charge_setting_id": str(charge_setting_id),
-            "version_id": str(version.version_id),
-            "version_number": version.version_number,
-            "tier_name": tier.tier_name,
-            "tier_range": f"{tier.min_price} - {tier.max_price or 'unlimited'}",
-            "percentage_rate": str(tier.percentage_rate),
-            "calculated_charge": str(charge),
-            "min_cap_applied": tier.min_charge is not None
-            and charge == tier.min_charge,
-            "max_cap_applied": tier.max_charge is not None
-            and charge == tier.max_charge,
-        }
+            return {
+                "base_amount": str(base_amount),
+                "charge_setting_id": str(charge_setting_id),
+                "version_id": str(version.version_id),
+                "version_number": version.version_number,
+                "tier_name": tier.tier_name,
+                "tier_range": f"{tier.min_price} - {tier.max_price or 'unlimited'}",
+                "percentage_rate": str(tier.percentage_rate),
+                "calculated_charge": str(charge),
+                "min_cap_applied": tier.min_charge is not None
+                and charge == tier.min_charge,
+                "max_cap_applied": tier.max_charge is not None
+                and charge == tier.max_charge,
+            }
+        else:
+            tiers = version.find_applicable_tiers(base_amount)
+
+            if not tiers:
+                return None
+
+            charge = version.calculate_charge(base_amount)
+
+            return {
+                "base_amount": str(base_amount),
+                "charge_setting_id": str(charge_setting_id),
+                "version_id": str(version.version_id),
+                "version_number": version.version_number,
+                "tier_name": [t.tier_name for t in tiers],
+                "tier_range": [
+                    f"{t.min_price} - {t.max_price or "unlimited"}" for t in tiers
+                ],
+                "percentage_rate": ",".join([str(t.percentage_rate) for t in tiers]),
+                "calculated_charge": str(charge),
+            }

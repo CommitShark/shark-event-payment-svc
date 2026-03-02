@@ -146,6 +146,8 @@ class RequestChargeUseCase:
             raise AppError("Minimum deposit amount is 100 naira", 400)
 
         charge = await self._charge_repo.get_by_type("deposit_ng")
+        if not charge.is_active:
+            raise AppError("Selected charge is inactive", 400)
 
         charge_data = await self._charge_calc_service.get_charge_breakdown(
             charge_setting_id=charge.charge_setting_id,

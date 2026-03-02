@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel
 
 from app.domain.entities import ChargeSetting, ChargeSettingVersion, PriceRangeTier
+from app.domain.entities.charge_setting_version import TierOverlapStrategy
 from app.infrastructure.sqlalchemy.session import get_async_session
 
 from ..factory import (
@@ -22,6 +23,8 @@ class Version(BaseModel):
     tiers: list[PriceRangeTier]
     created_by: str
     change_reason: str
+    allow_overlap: bool = False
+    overlap_strategy: str | None = None
 
 
 class Charge(BaseModel):
@@ -89,6 +92,12 @@ def seed_charges(force: bool):
                         created_by=charge.init_version.created_by,
                         tiers=charge.init_version.tiers,
                         effective_from=datetime.now(timezone.utc),
+                        allow_overlap=charge.init_version.allow_overlap,
+                        overlap_strategy=(
+                            TierOverlapStrategy(charge.init_version.overlap_strategy)
+                            if charge.init_version.overlap_strategy
+                            else None
+                        ),
                     )
 
                     charge_version_repo.save(version)

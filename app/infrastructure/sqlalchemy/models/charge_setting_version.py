@@ -11,9 +11,11 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
     Index,
+    Boolean,
 )
 
 from app.domain.entities import ChargeSettingVersion, PriceRangeTier
+from app.domain.entities.charge_setting_version import TierOverlapStrategy
 
 from app.infrastructure.sqlalchemy.session import Base
 
@@ -56,6 +58,14 @@ class SqlAlchemyChargeSettingVersion(Base):
         nullable=False,
     )
 
+    allow_overlap: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default="false",
+    )
+
+    overlap_strategy: Mapped[str] = mapped_column(String(20), nullable=True)
+
     effective_until: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -94,6 +104,10 @@ class SqlAlchemyChargeSettingVersion(Base):
             created_by=data.created_by,
             change_reason=data.change_reason,
             charge_setting_id=data.charge_setting_id,
+            allow_overlap=data.allow_overlap,
+            overlap_strategy=(
+                data.overlap_strategy.value if data.overlap_strategy else None
+            ),
         )
 
     def to_domain(self) -> "ChargeSettingVersion":
@@ -107,4 +121,10 @@ class SqlAlchemyChargeSettingVersion(Base):
             created_by=self.created_by,
             change_reason=self.change_reason,
             charge_setting_id=self.charge_setting_id,
+            allow_overlap=self.allow_overlap,
+            overlap_strategy=(
+                TierOverlapStrategy(self.overlap_strategy)
+                if self.overlap_strategy
+                else None
+            ),
         )

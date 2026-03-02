@@ -36,26 +36,37 @@
         "charge_type": "instant_withdrawal_ng",
         "init_version": {
             "version_number": 1,
+            "allow_overlap": true,
+            "overlap_strategy": "sum",
             "tiers": [
                 {
-                    "tier_name": "Small",
-                    "min_price": "1000",
-                    "max_price": "5000",
+                    "tier_name": "NIP Fee + VAT",
+                    "min_price": "0",
+                    "max_price": "10000",
+                    "percentage_rate": "2",
+                    "additional_charge": "10",
+                    "max_charge": "12"
+                },
+                {
+                    "tier_name": "NIP Fee + VAT",
+                    "min_price": "10000.01",
+                    "max_price": "50000",
+                    "percentage_rate": "2",
+                    "additional_charge": "25",
+                    "max_charge": "30"
+                },
+                {
+                    "tier_name": "NIP Fee + VAT",
+                    "min_price": "50000.01",
+                    "percentage_rate": "2",
+                    "additional_charge": "50",
+                    "max_charge": "60"
+                },
+                {
+                    "tier_name": "Stamp Duty",
+                    "min_price": "10000",
                     "percentage_rate": "0",
                     "additional_charge": "50"
-                },
-                {
-                    "tier_name": "Medium",
-                    "min_price": "5000.01",
-                    "max_price": "50000",
-                    "percentage_rate": "0",
-                    "additional_charge": "100"
-                },
-                {
-                    "tier_name": "Large",
-                    "min_price": "50000.01",
-                    "percentage_rate": "0",
-                    "additional_charge": "200"
                 }
             ],
             "created_by": "system",

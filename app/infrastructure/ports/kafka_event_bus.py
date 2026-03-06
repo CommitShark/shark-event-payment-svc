@@ -40,11 +40,13 @@ class KafkaEventBus(IEventBus):
     async def connect_producer(self):
         try:
             # Create producer
-            self._producer = AIOKafkaProducer(
-                bootstrap_servers=self.bootstrap_servers,
-                value_serializer=lambda v: v.encode("utf-8"),
-                key_serializer=lambda v: v.encode("utf-8") if v else None,
-            )
+            if not self._producer:
+                self._producer = AIOKafkaProducer(
+                    bootstrap_servers=self.bootstrap_servers,
+                    value_serializer=lambda v: v.encode("utf-8"),
+                    key_serializer=lambda v: v.encode("utf-8") if v else None,
+                )
+
             await self._producer.start()
         except Exception as e:
             logger.error(f"Failed to connect to Kafka: {e}")

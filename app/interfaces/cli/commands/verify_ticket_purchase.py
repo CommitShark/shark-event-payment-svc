@@ -40,4 +40,4 @@ def verify_ticket_purchase(
             await use_case.execute(reference=str(reference), user_id=user)
             click.echo("✅ Verified successfully.")
 
-        asyncio.run(_run())
+    asyncio.run(_run())

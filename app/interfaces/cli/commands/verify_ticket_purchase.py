@@ -16,7 +16,7 @@ from ..factory import session_context, get_ITransactionRepository
     required=True,
 )
 @click.option(
-    "reference",
+    "--reference",
     type=UUID,
     help="Transaction Reference",
     required=True,

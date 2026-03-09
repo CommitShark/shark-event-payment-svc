@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from app.infrastructure.grpc import ticketing_pb2 as ticketing__pb2
+import app.infrastructure.grpc.ticketing_pb2 as ticketing__pb2
 
 GRPC_GENERATED_VERSION = "1.76.0"
 GRPC_VERSION = grpc.__version__
@@ -55,6 +55,12 @@ class GrpcTicketingServiceStub(object):
             response_deserializer=ticketing__pb2.MarkReservationAsPaidResponse.FromString,
             _registered_method=True,
         )
+        self.GetReservationExtraOrders = channel.unary_unary(
+            "/ticketing.GrpcTicketingService/GetReservationExtraOrders",
+            request_serializer=ticketing__pb2.GetReservationExtraOrdersRequest.SerializeToString,
+            response_deserializer=ticketing__pb2.GetReservationExtraOrdersResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class GrpcTicketingServiceServicer(object):
@@ -78,6 +84,12 @@ class GrpcTicketingServiceServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def GetReservationExtraOrders(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_GrpcTicketingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -95,6 +107,11 @@ def add_GrpcTicketingServiceServicer_to_server(servicer, server):
             servicer.MarkReservationAsPaid,
             request_deserializer=ticketing__pb2.MarkReservationAsPaidRequest.FromString,
             response_serializer=ticketing__pb2.MarkReservationAsPaidResponse.SerializeToString,
+        ),
+        "GetReservationExtraOrders": grpc.unary_unary_rpc_method_handler(
+            servicer.GetReservationExtraOrders,
+            request_deserializer=ticketing__pb2.GetReservationExtraOrdersRequest.FromString,
+            response_serializer=ticketing__pb2.GetReservationExtraOrdersResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -189,6 +206,36 @@ class GrpcTicketingService(object):
             "/ticketing.GrpcTicketingService/MarkReservationAsPaid",
             ticketing__pb2.MarkReservationAsPaidRequest.SerializeToString,
             ticketing__pb2.MarkReservationAsPaidResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetReservationExtraOrders(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/ticketing.GrpcTicketingService/GetReservationExtraOrders",
+            ticketing__pb2.GetReservationExtraOrdersRequest.SerializeToString,
+            ticketing__pb2.GetReservationExtraOrdersResponse.FromString,
             options,
             channel_credentials,
             insecure,

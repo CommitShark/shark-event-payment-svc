@@ -19,6 +19,8 @@ class GenericSettings(BaseSettings):
 
     max_attendee_wallet_balance: Decimal
 
+    event_svc_url: str
+
     disable_withdrawal_charges: int = 0
 
     debug: bool = False

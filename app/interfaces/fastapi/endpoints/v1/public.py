@@ -5,7 +5,11 @@ from app.application.dto.checkout import (
     VerifyTicketPurchaseReqDto,
     VerifyTicketPurchaseResDto,
 )
-from app.application.dto.charge_request import GetChargeResDto
+from app.application.dto.charge_request import (
+    GetChargeResDto,
+    ChargeDto,
+    PublicGetChargeReqDto,
+)
 
 from app.interfaces.fastapi.di import (
     CreateCheckoutUseCaseDep,
@@ -26,18 +30,8 @@ async def ticket_purchase(
     req: PublicCreateCheckoutReqDto,
 ):
     link = await use_case.execute(
+        req=req,
         user_id=req.user_auth_id,
-        email=req.email,
-        reservation_id=req.reservation_id,
-        charge_setting_id=req.charge_setting_id,
-        version_id=req.version_id,
-        version_number=req.version_number,
-        calculated_charge=req.calculated_charge,
-        ticket_type_id=req.ticket_type_id,
-        slug=req.slug,
-        signature=req.signature,
-        quantity=req.quantity,
-        base_amount=req.base_amount,
     )
 
     return CreateCheckoutResDto(
@@ -62,23 +56,23 @@ async def verify_ticket_purchase(
     )
 
 
-@router.get(
+@router.post(
     "/charges/ticket-purchase",
     response_model=GetChargeResDto,
 )
 async def get_ticket_type_charge(
     use_case: RequestChargeUseCaseDep,
-    ticket_type_id: str = Query(...),
-    quantity: int = Query(...),
-    slug: str = Query(...),
-    user_id: str = Query(...),
+    req: PublicGetChargeReqDto,
 ):
-    result = await use_case.execute(
-        user_id=user_id,
-        charge_type="ticket_purchase_ng",
-        ticket_type_id=ticket_type_id,
-        slug=slug,
-        quantity=quantity,
+    charges, sig = await use_case.ticket_charge(
+        user_id=str(req.user_id),
+        ticket_type_id=str(req.ticket_type_id),
+        slug=req.slug,
+        quantity=req.quantity,
+        extras=req.extras,
     )
 
-    return result
+    return GetChargeResDto(
+        charges=[ChargeDto.model_validate(c) for c in charges],
+        signature=sig,
+    )

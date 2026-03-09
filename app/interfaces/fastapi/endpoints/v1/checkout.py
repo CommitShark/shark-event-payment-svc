@@ -56,18 +56,8 @@ async def ticket_purchase(
     req: CreateCheckoutReqDto,
 ):
     link = await use_case.execute(
+        req=req,
         user_id=str(context.user_id),
-        email=req.email,
-        reservation_id=req.reservation_id,
-        charge_setting_id=req.charge_setting_id,
-        version_id=req.version_id,
-        version_number=req.version_number,
-        calculated_charge=req.calculated_charge,
-        ticket_type_id=req.ticket_type_id,
-        slug=req.slug,
-        signature=req.signature,
-        quantity=req.quantity,
-        base_amount=req.base_amount,
     )
 
     return CreateCheckoutResDto(

@@ -23,34 +23,6 @@ class ChargeCalculationService:
         self.charge_setting_repo = charge_setting_repo
         self.version_repo = version_repo
 
-    async def calculate_charge(
-        self,
-        charge_setting_id: UUID,
-        base_amount: Decimal,
-        at_time: Optional[datetime] = None,
-    ) -> Optional[Decimal]:
-        """
-        Calculate charge for a base amount.
-
-        Args:
-            charge_setting_id: ID of the charge setting to use
-            base_amount: The ticket price or base amount
-            at_time: Time to use for version lookup (defaults to now)
-
-        Returns:
-            Calculated charge or None if no active version found
-        """
-        # Get appropriate version
-        if at_time:
-            version = await self.version_repo.get_version_at(charge_setting_id, at_time)
-        else:
-            version = await self.version_repo.get_current_version(charge_setting_id)
-
-        if version is None:
-            return None
-
-        return version.calculate_charge(base_amount)
-
     async def get_charge_breakdown(
         self,
         charge_setting_id: UUID,

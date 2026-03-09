@@ -7,7 +7,8 @@ from typing import Any
 
 from app.config import settings
 from app.domain.entities import Transaction
-from app.domain.entities.value_objects import SettlementData
+from app.domain.entities.value_objects import SettlementData, SettlementDataResource
+from app.domain.dto.extra import ExtraOrderDto
 from app.domain.repositories import ITransactionRepository
 from app.domain.ports import ITicketService, IUserService, IEventBus
 from app.shared.errors import AppError
@@ -39,26 +40,24 @@ class SettleTicketPurchaseUseCase:
             raise AppError(f"Transaction {txn.reference} missing charge data", 400)
 
         # Close Reservation
-        logger.debug(f"Transaction {txn.reference}: Mark reservation as paid")
-        await self._ticket_service.mark_reservation_as_paid(
-            str(txn.reference),
-            txn.amount,
+        print(f"Fetch reservation extras")
+        orders = await self._ticket_service.get_reservation_extra_orders(
+            str(txn.reference)
         )
-        logger.debug(f"Transaction {txn.reference}: Marked reservation as paid")
 
-        logger.debug(f"Settle ticket purchase for txn with ref {txn.reference}")
+        print(f"Settle ticket purchase for txn with ref {txn.reference}")
 
         slug = txn.metadata.get("slug", None) if txn.metadata else None
 
         if not slug:
-            logger.error(f"Slug not found for transaction with ref {txn.reference}")
+            print(f"Slug not found for transaction with ref {txn.reference}")
             raise AppError(
                 f"Transaction {txn.reference} missing event slug metadata", 400
             )
 
-        logger.debug(f"Transaction {txn.reference}: Get organizer with slug: {slug}")
+        print(f"Transaction {txn.reference}: Get organizer with slug: {slug}")
         organizer = await self._user_service.get_event_organizer(slug=slug)
-        logger.debug("Organizer: %s", organizer)
+        print("Organizer: %s", organizer)
 
         (
             system,
@@ -70,7 +69,7 @@ class SettleTicketPurchaseUseCase:
             self._user_service.get_referral_info(str(txn.user_id)),  # buyer referrer
         )
 
-        logger.debug(
+        print(
             "Organizer: %s \nSystem: %s \nBuyer Referrer: %s \nOrganizer Referrer %s",
             organizer,
             system,
@@ -80,88 +79,138 @@ class SettleTicketPurchaseUseCase:
 
         # Convert to Decimal with proper handling
         try:
-            fee = Decimal(str(txn.charge_data.charge_amount))
-            amount_paid = Decimal(str(txn.amount))
+            ticket_fee = txn.get_total_charge_amount("tickets")
+            extras_fee = txn.get_total_charge_amount("extras")
+            amount_paid = txn.amount
         except (ValueError, TypeError) as e:
             raise AppError(
                 f"Invalid amount in transaction {txn.reference}: {e}",
                 400,
             )
 
-        if txn.charge_data.sponsored:
+        if txn.is_charge_sponsored("tickets"):
             raise AppError("Sponsored charge is not yet implemented", 500)
+
+        has_extras = len(orders) > 0
+        ticket_amount = amount_paid
+
+        if has_extras:
+            extras_total = ExtraOrderDto.calculate_total(orders)
+            ticket_amount = ticket_amount - (extras_total + extras_fee)
+
+        print(f"Transaction {txn.reference}: Mark reservation as paid")
+        await self._ticket_service.mark_reservation_as_paid(
+            str(txn.reference),
+            ticket_fee,
+        )
+        print(
+            f"Transaction {txn.reference}: Marked reservation as paid. Found {len(orders)} extra orders"
+        )
 
         # Credit the event organizer (amount paid minus platform fee)
         txn.add_settlement(
             SettlementData(
-                amount=amount_paid - fee,
+                amount=ticket_amount - ticket_fee,
                 recipient_user=UUID(organizer),
                 transaction_type="sale",
                 role="organizer",
             )
         )
 
+        if has_extras:
+            for o in orders:
+                txn.add_settlement(
+                    SettlementData(
+                        amount=o.cost,
+                        recipient_user=UUID(organizer),
+                        transaction_type="sale",
+                        role="organizer",
+                        resource=SettlementDataResource(
+                            resource="extra",
+                            resource_id=o.extra_id,
+                        ),
+                        metadata={"extra_order": {**o.model_dump()}},
+                    )
+                )
+
         # Handle referral commissions if applicable
         if buyer_referrer or organizer_referrer:
             # Calculate referral share
-            referral_share = ((fee * REFERRAL_PERCENTAGE) / 100).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
+            referral_share = (
+                ((ticket_fee * REFERRAL_PERCENTAGE) / 100).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+                if ticket_fee > 0
+                else Decimal(0)
             )
 
             # Reduce platform fee by referral amount
-            fee = fee - referral_share
+            ticket_fee = ticket_fee - referral_share if ticket_fee > 0 else Decimal(0)
 
-            if buyer_referrer and organizer_referrer:
-                # Split referral commission between both referees
-                half_share = (referral_share / 2).quantize(
-                    Decimal("0.01"), rounding=ROUND_HALF_UP
-                )
-                txn.add_settlement(
-                    SettlementData(
-                        amount=half_share,
-                        recipient_user=UUID(buyer_referrer),
-                        transaction_type="commission",
-                        role="referrer",
+            if referral_share > Decimal(0):
+                if buyer_referrer and organizer_referrer:
+                    # Split referral commission between both referees
+                    half_share = (referral_share / 2).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
                     )
-                )
-                txn.add_settlement(
-                    SettlementData(
-                        amount=half_share,
-                        recipient_user=UUID(organizer_referrer),
-                        transaction_type="commission",
-                        role="referrer",
+                    txn.add_settlement(
+                        SettlementData(
+                            amount=half_share,
+                            recipient_user=UUID(buyer_referrer),
+                            transaction_type="commission",
+                            role="referrer",
+                        )
                     )
-                )
-            elif buyer_referrer:
-                # Full referral commission to buyer's referee
-                txn.add_settlement(
-                    SettlementData(
-                        amount=referral_share,
-                        recipient_user=UUID(buyer_referrer),
-                        transaction_type="commission",
-                        role="referrer",
+                    txn.add_settlement(
+                        SettlementData(
+                            amount=half_share,
+                            recipient_user=UUID(organizer_referrer),
+                            transaction_type="commission",
+                            role="referrer",
+                        )
                     )
-                )
-            else:  # organizer_referee only
-                # Full referral commission to organizer's referee
-                txn.add_settlement(
-                    SettlementData(
-                        amount=referral_share,
-                        recipient_user=UUID(organizer_referrer),
-                        transaction_type="commission",
-                        role="referrer",
+                elif buyer_referrer:
+                    # Full referral commission to buyer's referee
+                    txn.add_settlement(
+                        SettlementData(
+                            amount=referral_share,
+                            recipient_user=UUID(buyer_referrer),
+                            transaction_type="commission",
+                            role="referrer",
+                        )
                     )
-                )
+                else:  # organizer_referee only
+                    # Full referral commission to organizer's referee
+                    txn.add_settlement(
+                        SettlementData(
+                            amount=referral_share,
+                            recipient_user=UUID(organizer_referrer),
+                            transaction_type="commission",
+                            role="referrer",
+                        )
+                    )
 
         # Platform fee settlement
         txn.add_settlement(
             SettlementData(
-                amount=fee,
+                amount=ticket_fee,
                 recipient_user=UUID(system),
                 transaction_type="commission",
                 role="system_admin",
             )
         )
+
+        if has_extras and extras_fee > Decimal(0):
+            txn.add_settlement(
+                SettlementData(
+                    amount=extras_fee,
+                    recipient_user=UUID(system),
+                    transaction_type="commission",
+                    role="system_admin",
+                    resource=SettlementDataResource(resource="extras"),
+                    metadata={"extra_orders": [o.model_dump() for o in orders]},
+                )
+            )
 
         run_at = None
         if settings.settlement_delay_hours > 0:
@@ -188,7 +237,7 @@ class SettleTicketPurchaseUseCase:
             for s_ev in s_txn.events:
                 await self._event_bus.publish(s_ev)
 
-        logger.info(
+        print(
             f"Transaction {txn.reference} processed successfully. "
             f"Created {len(txn.settlement_data)} settlements."
         )

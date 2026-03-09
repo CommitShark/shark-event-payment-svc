@@ -1,17 +1,28 @@
 from pydantic import BaseModel, EmailStr
 from decimal import Decimal
 
+from .charge_request import GetChargeResDto
 
-class CheckoutMetaData(BaseModel):
+
+class CheckoutChargeMetadata(BaseModel):
+    base_amount: str
     charge_setting_id: str
     version_id: str
     version_number: int
     calculated_charge: str
-    ticket_type_id: str
-    slug: str
     sponsored: bool
     user: str
+
+
+class TicketCheckoutChargeMetadata(CheckoutChargeMetadata):
+    ticket_type_id: str
+    slug: str
     quantity: int
+
+
+class CheckoutMetaData(BaseModel):
+    ticket_charge: TicketCheckoutChargeMetadata
+    extras_charge: CheckoutChargeMetadata | None
     signature: str
 
 
@@ -28,17 +39,12 @@ class DepositCheckoutMetaData(BaseModel):
 
 
 class CreateCheckoutReqDto(BaseModel):
+    charge: GetChargeResDto
     reservation_id: str
-    charge_setting_id: str
-    version_id: str
-    version_number: int
-    calculated_charge: str
     ticket_type_id: str
     slug: str
     email: EmailStr
-    signature: str
     quantity: int
-    base_amount: Decimal
 
 
 class PublicCreateCheckoutReqDto(CreateCheckoutReqDto):

@@ -15,7 +15,7 @@ from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyTransactionRepository,
     SqlAlchemyWalletRepository,
 )
-from app.domain.ports import IPaymentAdapter, IEventBus
+from app.domain.ports import IPaymentAdapter, IEventBus, IEventService
 from app.infrastructure.ports import GrpcTicketService, GrpcUserService
 from app.domain.services import ChargeCalculationService
 from app.application.use_cases import (
@@ -52,6 +52,19 @@ def get_IEventBus(
 
 
 EventBusDep = Annotated[IEventBus, Depends(get_IEventBus)]
+
+
+def get_IEventService(request: Request) -> IEventService:
+    event_service = getattr(request.app.state, "event_service", None)
+    if not event_service:
+        raise RuntimeError("EventBus not initialized")
+    return event_service
+
+
+EventServiceDep = Annotated[
+    IEventService,
+    Depends(get_IEventService),
+]
 
 
 def get_payment_adapter(
@@ -109,6 +122,7 @@ ChargeSettingVersionRepoDep = Annotated[
 def get_RequestChargeUseCase(
     charge_setting_repo: ChargeSettingRepoDep,
     version_repo: ChargeSettingVersionRepoDep,
+    event_service: EventServiceDep,
 ):
     ticket_stub = grpc_client.get_ticket_grpc_stub()
 
@@ -120,6 +134,7 @@ def get_RequestChargeUseCase(
         charge_calc_service,
         charge_setting_repo,
         ticket_service=GrpcTicketService(ticket_stub),
+        event_service=event_service,
     )
 
 

@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Query
 from decimal import Decimal
 from typing import Optional
-from app.application.dto.charge_request import GetChargeResDto
+from app.application.dto.charge_request import (
+    ChargeDto,
+    GetChargeReqDto,
+    GetChargeResDto,
+)
 
 from app.interfaces.fastapi.context import UserContextDep, ProtectedDep
 from app.interfaces.fastapi.di import RequestChargeUseCaseDep
@@ -9,27 +13,31 @@ from app.interfaces.fastapi.di import RequestChargeUseCaseDep
 router = APIRouter(prefix="/v1/charges", tags=["Charges"])
 
 
-@router.get("/ticket-purchase", response_model=GetChargeResDto)
+@router.post(
+    "/ticket-purchase",
+    response_model=GetChargeResDto,
+)
 async def get_ticket_type_charge(
     _: ProtectedDep,
     context: UserContextDep,
     use_case: RequestChargeUseCaseDep,
-    ticket_type_id: str = Query(...),
-    quantity: int = Query(...),
-    slug: str = Query(...),
+    req: GetChargeReqDto,
 ):
-    result = await use_case.execute(
+    charges, sig = await use_case.ticket_charge(
         user_id=str(context.user_id),
-        charge_type="ticket_purchase_ng",
-        ticket_type_id=ticket_type_id,
-        slug=slug,
-        quantity=quantity,
+        ticket_type_id=str(req.ticket_type_id),
+        slug=req.slug,
+        quantity=req.quantity,
+        extras=req.extras,
     )
 
-    return result
+    return GetChargeResDto(
+        charges=[ChargeDto.model_validate(c) for c in charges],
+        signature=sig,
+    )
 
 
-@router.get("/instant-withdrawal", response_model=Optional[GetChargeResDto])
+@router.get("/instant-withdrawal", response_model=Optional[ChargeDto])
 async def get_instant_withdrawal_charge(
     _: ProtectedDep,
     context: UserContextDep,
@@ -45,7 +53,7 @@ async def get_instant_withdrawal_charge(
     return result
 
 
-@router.get("/deposit", response_model=Optional[GetChargeResDto])
+@router.get("/deposit", response_model=Optional[ChargeDto])
 async def get_deposit_charge(
     _: ProtectedDep,
     context: UserContextDep,

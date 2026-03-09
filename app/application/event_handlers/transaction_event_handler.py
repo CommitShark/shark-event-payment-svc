@@ -83,8 +83,8 @@ class TransactionEventHandler(IEventHandler):
                 return
 
             expected_amount_paid = (
-                txn.amount + txn.charge_data.charge_amount
-                if txn.charge_data and not txn.charge_data.sponsored
+                txn.amount + txn.get_total_charge_amount()
+                if txn.is_charge_sponsored()
                 else Decimal("0")
             )
 
@@ -163,7 +163,7 @@ class TransactionEventHandler(IEventHandler):
             if not txn:
                 raise AppError(f"Transaction {payload.reference} not found", 404)
 
-            logger.debug(f"Transaction with ref {payload.reference} found")
+            print(f"Transaction with ref {payload.reference} found")
 
             if txn.settlement_status != "pending":
                 if (
@@ -177,7 +177,7 @@ class TransactionEventHandler(IEventHandler):
                         event_bus=event_bus,
                     )
                 else:
-                    logger.debug(
+                    print(
                         f"Transaction with ref {payload.reference} is no longer pending, status is {txn.settlement_status}",
                     )
                 return

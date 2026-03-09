@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from uuid import UUID
 from decimal import Decimal
 from typing import Literal
@@ -30,12 +30,20 @@ class ChargeData(BaseModel):
     version_number: int
     charge_amount: Decimal = Field(gt=0)
     sponsored: bool
+    charge_group: str | None = None
 
-    model_config = {
-        "json_encoders": {
-            Decimal: lambda v: format(v, "f"),
-        }
-    }
+    @field_serializer("charge_amount")
+    def serialize_decimal(self, v: Decimal):
+        return format(v, "f")
+
+
+class SettlementDataResource(BaseModel):
+    resource: str
+    resource_id: UUID | None = None
+
+    @field_serializer("resource_id")
+    def serialize_uuid(self, v: UUID | None):
+        return str(v) if v else None
 
 
 class SettlementData(BaseModel):
@@ -43,12 +51,16 @@ class SettlementData(BaseModel):
     recipient_user: UUID
     transaction_type: TransactionType
     role: str
+    resource: SettlementDataResource | None = None
+    metadata: dict | None = None
 
-    model_config = {
-        "json_encoders": {
-            Decimal: lambda v: format(v, "f"),
-        }
-    }
+    @field_serializer("amount")
+    def serialize_amount(self, v: Decimal):
+        return format(v, "f")
+
+    @field_serializer("recipient_user")
+    def serialize_recipient_user(self, v: UUID):
+        return str(v)
 
 
 class BankDetails(BaseModel):

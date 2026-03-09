@@ -10,6 +10,7 @@ from sqlalchemy import (
     JSON,
     ForeignKey,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 
 from uuid import UUID as PyUUID
 from app.domain.entities import Transaction
@@ -65,7 +66,7 @@ class SqlAlchemyTransaction(Base):
         DateTime(timezone=True), nullable=False
     )
 
-    charge_data: Mapped[Optional[str]] = mapped_column(
+    charge_data: Mapped[Optional[dict | list[dict]]] = mapped_column(
         JSON,
         nullable=True,
     )
@@ -85,8 +86,8 @@ class SqlAlchemyTransaction(Base):
         nullable=False,
     )
 
-    settlement_data: Mapped[list[str]] = mapped_column(
-        JSON,
+    settlement_data: Mapped[list[dict]] = mapped_column(
+        JSONB,
         nullable=False,
     )
 
@@ -122,12 +123,14 @@ class SqlAlchemyTransaction(Base):
             source=data.source,
             occurred_on=data.occurred_on,
             charge_data=(
-                data.charge_data.model_dump_json() if data.charge_data else None
+                [c.model_dump() for c in data.charge_data]
+                if isinstance(data.charge_data, list)
+                else data.charge_data.model_dump() if data.charge_data else None
             ),
             settlement_status=data.settlement_status,
             transaction_type=data.transaction_type,
             transaction_direction=data.transaction_direction,
-            settlement_data=[s.model_dump_json() for s in data.settlement_data],
+            settlement_data=[s.model_dump() for s in data.settlement_data],
             created_at=data.created_at,
             metadata_=data.metadata,
             parent_id=data.parent_id,
@@ -145,15 +148,19 @@ class SqlAlchemyTransaction(Base):
             source=self.source,
             occurred_on=self.occurred_on,
             charge_data=(
-                ChargeData.model_validate_json(self.charge_data)
-                if self.charge_data
-                else None
+                [ChargeData.model_validate(c) for c in self.charge_data]
+                if isinstance(self.charge_data, list)
+                else (
+                    ChargeData.model_validate(self.charge_data)
+                    if self.charge_data
+                    else None
+                )
             ),
             settlement_status=self.settlement_status,
             transaction_type=self.transaction_type,
             transaction_direction=self.transaction_direction,
             settlement_data=[
-                SettlementData.model_validate_json(s) for s in self.settlement_data
+                SettlementData.model_validate(s) for s in self.settlement_data
             ],
             created_at=self.created_at,
             metadata=self.metadata_,

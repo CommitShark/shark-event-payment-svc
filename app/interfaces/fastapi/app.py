@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.config import grpc_config
+from app.config import grpc_config, settings
 from app.config.http import HttpSettings
 from app.config.sqlalchemy import DatabaseSettings
 from app.shared.errors import AppError
@@ -21,7 +21,9 @@ from app.infrastructure.ports.paystack_adapter import (
     get_PaystackAdapter,
     dispose_PaystackAdapter,
 )
+from app.infrastructure.ports.http_event_service import HttpEventService
 from app.application.event_handlers import TransactionEventHandler
+from app.utils.external_api_client import ExternalAPIClient
 from .endpoints.v1 import charges, checkout, wallet, webhook, public
 
 logger = logging.getLogger(__name__)
@@ -61,6 +63,13 @@ async def app_lifespan(app: FastAPI):
 
     app.state.event_bus = kafka_event_bus
 
+    event_svc_client = ExternalAPIClient(
+        base_url=settings.event_svc_url,
+    )
+    event_service = HttpEventService(event_svc_client)
+
+    app.state.event_service = event_service
+
     await setup_handlers(kafka_event_bus)
     await kafka_event_bus.connect()
     await kafka_event_bus.start_consuming()
@@ -81,6 +90,7 @@ async def app_lifespan(app: FastAPI):
     # 4. Cleanup
     await grpc_client.close_ticket_grpc_client()
     await grpc_client.close_user_grpc_client()
+    await event_svc_client.client.aclose()
     await dispose_PaystackAdapter()
     await kafka_event_bus.disconnect()
     # await permify_client.client.aclose()

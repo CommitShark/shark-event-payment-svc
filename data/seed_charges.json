@@ -32,6 +32,30 @@
         }
     },
     {
+        "name": "Platform Extra Sale Charge (NG)",
+        "charge_type": "extra_purchase_ng",
+        "init_version": {
+            "version_number": 1,
+            "tiers": [
+                {
+                    "tier_name": "Small",
+                    "min_price": "0",
+                    "max_price": "2500",
+                    "percentage_rate": "5",
+                    "max_charge": "200"
+                },
+                {
+                    "tier_name": "Large",
+                    "min_price": "2500.01",
+                    "percentage_rate": "5",
+                    "max_charge": "3500"
+                }
+            ],
+            "created_by": "system",
+            "change_reason": "Seeded charge"
+        }
+    },
+    {
         "name": "Platform Withdrawal Charge (NG)",
         "charge_type": "instant_withdrawal_ng",
         "init_version": {

@@ -10,11 +10,30 @@ service GrpcTicketingService {
   rpc GetTicketPrice(GetTicketPriceRequest) returns (GetTicketPriceResponse);
 
   rpc MarkReservationAsPaid(MarkReservationAsPaidRequest) returns (MarkReservationAsPaidResponse);
+
+  rpc GetReservationExtraOrders(GetReservationExtraOrdersRequest) returns (GetReservationExtraOrdersResponse);
 }
 
 message MarkReservationAsPaidRequest {
     string reservation_id = 1;
     string ticket_amount = 2;
+}
+
+message ExtraOrderDto {
+    string extra_id = 1;
+    int32 extra_version = 2;
+    int32 quantity = 3;
+    string unit_price = 4;
+    string recipient = 5;
+}
+
+message GetReservationExtraOrdersRequest {
+    string reservation_id = 1;
+}
+
+message GetReservationExtraOrdersResponse {
+    optional string error = 1;
+    repeated ExtraOrderDto orders = 2;
 }
 
 message MarkReservationAsPaidResponse {

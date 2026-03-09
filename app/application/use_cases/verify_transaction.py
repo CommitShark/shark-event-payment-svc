@@ -1,10 +1,12 @@
 import logging
+import json
 from decimal import Decimal
 from uuid import UUID
 
 from app.domain.ports import IPaymentAdapter, IEventBus
 from app.domain.repositories import ITransactionRepository
 from app.domain.entities import Transaction
+from app.application.dto.checkout import CheckoutMetaData
 from app.domain.entities.value_objects import ChargeData
 from app.config import settings
 from app.utils.signing import sign_payload
@@ -42,39 +44,70 @@ class VerifyTicketPurchaseTransactionUseCase:
             logger.debug("Metadata not found")
             raise AppError("Malformed transaction. Please contact support", 500)
 
-        metadata: dict = ext_transaction.metadata
-        signature = metadata.pop("signature", None)
+        metadata = CheckoutMetaData.model_validate(ext_transaction.metadata)
 
-        if "referrer" in metadata:
-            _ = metadata.pop("referrer")
+        ticket_charge_payload = metadata.ticket_charge.model_dump()
+        if "sponsored" in ticket_charge_payload:
+            _ = ticket_charge_payload.pop("sponsored")
 
-        if not signature:
-            logger.debug("Signature not found")
+        ticket_type_id = ticket_charge_payload.pop("ticket_type_id")
+
+        charges_data = [
+            {
+                **ticket_charge_payload,
+                "charge_group": "tickets",
+                "ticket_type": ticket_type_id,
+            }
+        ]
+
+        if metadata.extras_charge:
+            extra_charge_payload = metadata.extras_charge.model_dump()
+            if "sponsored" in extra_charge_payload:
+                _ = extra_charge_payload.pop("sponsored")
+            charges_data.append({**extra_charge_payload, "charge_group": "extras"})
+
+        expected_signature = sign_payload(charges_data, settings.charge_req_key)
+
+        if expected_signature != metadata.signature:
+            print("Signature mismatch")
             raise AppError("Malformed transaction. Please contact support", 500)
 
-        expected_signature = sign_payload(metadata, settings.charge_req_key)
+        charge_data: list[ChargeData] = [
+            ChargeData(
+                charge_setting_id=metadata.ticket_charge.charge_setting_id,
+                charge_amount=Decimal(metadata.ticket_charge.calculated_charge),
+                sponsored=bool(metadata.ticket_charge.sponsored),
+                version_id=metadata.ticket_charge.version_id,
+                version_number=metadata.ticket_charge.version_number,
+                charge_group="tickets",
+            )
+        ]
 
-        if expected_signature != signature:
-            logger.debug("Signature mismatch")
-            raise AppError("Malformed transaction. Please contact support", 500)
+        if metadata.extras_charge:
+            charge_data.append(
+                ChargeData(
+                    charge_setting_id=metadata.extras_charge.charge_setting_id,
+                    charge_amount=Decimal(metadata.extras_charge.calculated_charge),
+                    sponsored=bool(metadata.extras_charge.sponsored),
+                    version_id=metadata.extras_charge.version_id,
+                    version_number=metadata.extras_charge.version_number,
+                    charge_group="extras",
+                )
+            )
 
         txn = Transaction.create(
             amount=ext_transaction.amount,
-            charge_data=ChargeData(
-                charge_setting_id=metadata.pop("charge_setting_id"),
-                charge_amount=Decimal(metadata.pop("calculated_charge")),
-                sponsored=bool(metadata.pop("sponsored")),
-                version_id=metadata.pop("version_id"),
-                version_number=metadata.pop("version_number"),
-            ),
+            charge_data=charge_data,
             occurred_on=ext_transaction.occurred_on,
             reference=ext_transaction.reference,
             resource="ticket",
-            resource_id=UUID(metadata.pop("ticket_type_id")),
+            resource_id=UUID(metadata.ticket_charge.ticket_type_id),
             source="payment_provider",
             transaction_type="purchase",
-            user_id=UUID(metadata.pop("user")),
-            metadata=metadata,
+            user_id=UUID(metadata.ticket_charge.user),
+            metadata={
+                "slug": metadata.ticket_charge.slug,
+            },
         )
 
         if user_id and user_id != txn.user_id:

@@ -29,7 +29,7 @@ class Transaction(BaseModel):
     reference: UUID
     source: TransactionSource
     occurred_on: datetime
-    charge_data: Optional[ChargeData] = None
+    charge_data: Optional[ChargeData | list[ChargeData]] = None
     settlement_status: TransactionSettlementStatus
     transaction_type: TransactionType
     transaction_direction: TransactionDirection
@@ -82,6 +82,34 @@ class Transaction(BaseModel):
         self._events.clear()
         return events_
 
+    def is_charge_sponsored(self, charge_group: str | None = None) -> bool:
+        if not self.charge_data:
+            return False
+
+        if isinstance(self.charge_data, list):
+            if not charge_group:
+                return all(c for c in self.charge_data if c.sponsored)
+
+            return bool(
+                next(
+                    (
+                        c.sponsored
+                        for c in self.charge_data
+                        if c.charge_group == charge_group
+                    ),
+                    None,
+                )
+            )
+
+        if charge_group:
+            return self.charge_data.sponsored
+
+        return (
+            self.charge_data.sponsored
+            if self.charge_data.charge_group == charge_group
+            else False
+        )
+
     def schedule_settlement(self, run_at: datetime):
         if self.settlement_status != "pending":
             raise AppError(
@@ -90,6 +118,35 @@ class Transaction(BaseModel):
 
         self.delayed_settlement_until = run_at
         self.settlement_status = "scheduled"
+
+    def get_total_charge_amount(self, charge_group: str | None = None) -> Decimal:
+        """Calculate total charge amount from charge_data (handles both single and list)."""
+        if not self.charge_data:
+            return Decimal(0)
+
+        if isinstance(self.charge_data, list):
+            if not charge_group:
+                return sum((c.charge_amount for c in self.charge_data), Decimal(0))
+
+            charge = next(
+                (
+                    c.charge_amount
+                    for c in self.charge_data
+                    if c.charge_group == charge_group
+                ),
+                None,
+            )
+
+            return charge or Decimal(0)
+
+        if not charge_group:
+            return self.charge_data.charge_amount
+
+        return (
+            self.charge_data.charge_amount
+            if self.charge_data.charge_group == charge_group
+            else Decimal(0)
+        )
 
     def mark_as_failed(self, reason: str) -> Decimal | None:
         if self.transaction_type == "withdrawal" and (
@@ -111,9 +168,7 @@ class Transaction(BaseModel):
                     )
                 )
 
-                return self.amount + (
-                    self.charge_data.charge_amount if self.charge_data else 0
-                )
+                return self.amount + self.get_total_charge_amount()
 
         raise AppError(
             "MarkAsFailed: Not Implemented", 500, {"txn": self.model_dump_json()}
@@ -144,8 +199,12 @@ class Transaction(BaseModel):
             Transaction.create(
                 amount=s.amount,
                 user_id=s.recipient_user,
-                resource=self.resource,
-                resource_id=self.resource_id,
+                resource=s.resource.resource if s.resource else self.resource,
+                resource_id=(
+                    s.resource.resource_id
+                    if s.resource and s.resource.resource_id
+                    else self.resource_id
+                ),
                 occurred_on=datetime.now(timezone.utc),
                 transaction_type=s.transaction_type,
                 source=self.source,
@@ -153,6 +212,7 @@ class Transaction(BaseModel):
                 settlement_status="pending" if run_at is None else "scheduled",
                 delayed_settlement_until=run_at,
                 parent_id=self.id,
+                metadata=s.metadata,
             )
             for s in self.settlement_data
         ]
@@ -169,7 +229,7 @@ class Transaction(BaseModel):
         transaction_type: TransactionType,
         source: TransactionSource,
         settlement_status: TransactionSettlementStatus = "pending",
-        charge_data: Optional[ChargeData] = None,
+        charge_data: Optional[ChargeData | list[ChargeData]] = None,
         settlement_data: Optional[list[SettlementData]] = None,
         metadata: Optional[dict] = None,
         transaction_direction: Optional[TransactionDirection] = None,

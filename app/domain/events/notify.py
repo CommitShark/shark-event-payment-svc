@@ -96,7 +96,7 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                     data={
                         "amount": f"{format_currency(
                             txn.amount
-                        )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
+                        )} + Fees ({format_currency(txn.get_total_charge_amount())})",
                         "reference_id": txn.reference,
                         "destination": dest,
                         "date": date,
@@ -117,7 +117,7 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                     data={
                         "amount": f"{format_currency(
                             txn.amount
-                        )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
+                        )} + Fees ({format_currency(txn.get_total_charge_amount())})",
                         "reference_id": txn.reference,
                         "destination": dest,
                         "date": date,
@@ -156,7 +156,7 @@ class NotifyEvent(DomainEvent[NotifyPayload]):
                 data={
                     "amount": f"{format_currency(
                             txn.amount
-                        )} + Fees ({format_currency(txn.charge_data.charge_amount if txn.charge_data else 0)})",
+                        )} + Fees ({format_currency(txn.get_total_charge_amount())})",
                     "reference_id": txn.reference,
                     "destination": dest,
                     "date": date,

@@ -9,7 +9,7 @@ from app.application.dto.wallet import (
     UpdateTransactionPinRequestDto,
     SaveBankReqDto,
 )
-from app.application.dto.charge_request import GetChargeResDto
+from app.application.dto.charge_request import ChargeDto
 from app.application.mappers.wallet import wallet_to_dto
 from ...di import (
     ListUserTransactionUseCaseDep,
@@ -110,7 +110,7 @@ async def update_withdrawal_bank(
 @router.post("/withdraw", response_model=BaseResponseDTO)
 async def submit_withdrawal(
     use_case: SubmitWithdrawalUseCaseDep,
-    req: GetChargeResDto,
+    req: ChargeDto,
     context: UserContextDep,
 ):
     await use_case.execute(

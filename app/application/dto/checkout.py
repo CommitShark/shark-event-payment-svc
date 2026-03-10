@@ -12,11 +12,12 @@ class CheckoutChargeMetadata(BaseModel):
     calculated_charge: str
     sponsored: bool
     user: str
+    event_id: str
+    occurrence_id: str
 
 
 class TicketCheckoutChargeMetadata(CheckoutChargeMetadata):
     ticket_type_id: str
-    slug: str
     quantity: int
 
 
@@ -42,7 +43,9 @@ class CreateCheckoutReqDto(BaseModel):
     charge: GetChargeResDto
     reservation_id: str
     ticket_type_id: str
+    occurrence_id: str
     slug: str
+    event_id: str
     email: EmailStr
     quantity: int
 

@@ -23,9 +23,9 @@ class GrpcUserService(IUserService):
         self._user_stub = user_stub
 
     @cb
-    async def get_event_organizer(self, slug: str) -> str:
+    async def get_event_organizer(self, event_id: str) -> str:
         grpc_res = await self._user_stub.GetEventOrganizer(
-            user_pb2.GetEventOrganizerRequest(slug=slug)
+            user_pb2.GetEventOrganizerRequest(event_id=event_id)
         )
         grpc_res = cast(user_pb2.GetEventOrganizerResponse, grpc_res)
         if grpc_res.error.strip():

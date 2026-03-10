@@ -51,8 +51,9 @@ class CreateCheckoutUseCase:
             "calculated_charge": ticket_charge.calculated_charge,
             "user": user_id,
             "ticket_type": req.ticket_type_id,
-            "slug": req.slug,
             "quantity": req.quantity,
+            "event_id": req.event_id,
+            "occurrence_id": req.occurrence_id,
             "charge_group": "tickets",
         }
 
@@ -67,6 +68,8 @@ class CreateCheckoutUseCase:
                 "version_number": extras_charge.version_number,
                 "calculated_charge": extras_charge.calculated_charge,
                 "user": user_id,
+                "event_id": req.event_id,
+                "occurrence_id": req.occurrence_id,
                 "charge_group": "extras",
             }
             charges_data.append(charges_data_payload)

@@ -212,7 +212,7 @@ class Transaction(BaseModel):
                 settlement_status="pending" if run_at is None else "scheduled",
                 delayed_settlement_until=run_at,
                 parent_id=self.id,
-                metadata=s.metadata,
+                metadata={**(self.metadata or {}), **(s.metadata or {})},
             )
             for s in self.settlement_data
         ]

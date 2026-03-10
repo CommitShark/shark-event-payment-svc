@@ -106,7 +106,10 @@ class VerifyTicketPurchaseTransactionUseCase:
             transaction_type="purchase",
             user_id=UUID(metadata.ticket_charge.user),
             metadata={
-                "slug": metadata.ticket_charge.slug,
+                "event": {
+                    "id": metadata.ticket_charge.event_id,
+                    "occurrence": metadata.ticket_charge.occurrence_id,
+                },
             },
         )
 

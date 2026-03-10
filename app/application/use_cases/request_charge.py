@@ -42,18 +42,16 @@ class RequestChargeUseCase:
     async def ticket_charge(
         self,
         user_id: str,
-        ticket_type_id: Optional[str] = None,
-        slug: Optional[str] = None,
-        quantity: Optional[int] = None,
+        occurrence_id: str,
+        ticket_type_id: str,
+        event_id: str,
+        quantity: int,
         extras: Optional[list[ExtraOrderIntent]] = None,
     ):
         """
         Calculate charges for ticket purchase including extras.
         Returns separate charge groups for tickets and extras.
         """
-
-        if not ticket_type_id or not slug or not quantity:
-            raise AppError("Ticket type and event slug is required", 422)
 
         ticket_base_price = await self._ticket_service.get_ticket_price(ticket_type_id)
         ticket_subtotal = ticket_base_price * Decimal(quantity)
@@ -87,7 +85,8 @@ class RequestChargeUseCase:
                 "quantity": quantity,
                 "user": user_id,
                 "ticket_type": ticket_type_id,
-                "slug": slug,
+                "event_id": event_id,
+                "occurrence_id": occurrence_id,
                 "charge_group": "tickets",
             }
         )
@@ -157,6 +156,8 @@ class RequestChargeUseCase:
                     "version_number": extras_charge_data["version_number"],
                     "calculated_charge": extras_charge_data["calculated_charge"],
                     "user": user_id,
+                    "event_id": event_id,
+                    "occurrence_id": occurrence_id,
                     "charge_group": "extras",
                 }
             )

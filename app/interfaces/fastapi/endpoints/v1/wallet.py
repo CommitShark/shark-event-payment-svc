@@ -41,6 +41,8 @@ async def get_transactions(
     page: int = Query(...),
     page_size: int = Query(...),
     ticket_ids: str | None = Query(None),
+    occurrence: UUID | None = Query(None),
+    event: UUID | None = Query(None),
 ):
     uuids: list[UUID] = []
     if ticket_ids:
@@ -54,6 +56,8 @@ async def get_transactions(
         sort_by="occurred_on",
         user_id=context.user_id,
         ticket_ids=uuids,
+        event=event,
+        occurrence=occurrence,
     )
 
     result = await use_case.by_user(req)

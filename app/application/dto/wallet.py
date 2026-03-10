@@ -43,6 +43,8 @@ class ListTransactionRequestDto(PaginatedReqDto):
 class ListUserTransactionRequestDto(ListTransactionRequestDto):
     user_id: UUID
     ticket_ids: list[UUID]
+    event: UUID | None
+    occurrence: UUID | None
 
 
 class ListUserTransactionResponseDto(PaginatedResponseDto[TransactionDto]):

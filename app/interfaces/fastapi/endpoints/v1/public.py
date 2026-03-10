@@ -67,9 +67,10 @@ async def get_ticket_type_charge(
     charges, sig = await use_case.ticket_charge(
         user_id=str(req.user_id),
         ticket_type_id=str(req.ticket_type_id),
-        slug=req.slug,
         quantity=req.quantity,
         extras=req.extras,
+        occurrence_id=req.occurrence_id,
+        event_id=req.event_id,
     )
 
     return GetChargeResDto(

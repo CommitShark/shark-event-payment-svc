@@ -38,6 +38,8 @@ class ITransactionRepository(Protocol):
         limit: int,
         user_id: UUID,
         ticket_ids: list[UUID],
+        event: UUID | None,
+        occurrence: UUID | None,
     ) -> tuple[List[Transaction], int]: ...
 
     @abstractmethod

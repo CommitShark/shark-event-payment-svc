@@ -9,6 +9,7 @@ from app.config import settings
 from app.domain.entities import Transaction
 from app.domain.entities.value_objects import SettlementData, SettlementDataResource
 from app.domain.dto.extra import ExtraOrderDto
+from app.domain.dto.event import EventOccurrence
 from app.domain.repositories import ITransactionRepository
 from app.domain.ports import ITicketService, IUserService, IEventBus
 from app.shared.errors import AppError
@@ -47,16 +48,20 @@ class SettleTicketPurchaseUseCase:
 
         print(f"Settle ticket purchase for txn with ref {txn.reference}")
 
-        slug = txn.metadata.get("slug", None) if txn.metadata else None
+        event = txn.metadata.get("event", None) if txn.metadata else None
 
-        if not slug:
-            print(f"Slug not found for transaction with ref {txn.reference}")
+        if not event:
+            print(
+                f"Event not found in metadata for transaction with ref {txn.reference}"
+            )
             raise AppError(
-                f"Transaction {txn.reference} missing event slug metadata", 400
+                f"Transaction {txn.reference} missing event in metadata", 400
             )
 
-        print(f"Transaction {txn.reference}: Get organizer with slug: {slug}")
-        organizer = await self._user_service.get_event_organizer(slug=slug)
+        print(f"Transaction {txn.reference}: Get organizer with slug: {str(event)}")
+        organizer = await self._user_service.get_event_organizer(
+            event_id=EventOccurrence.model_validate(event).id,
+        )
         print("Organizer: %s", organizer)
 
         (

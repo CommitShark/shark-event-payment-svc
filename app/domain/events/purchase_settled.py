@@ -3,6 +3,7 @@ from uuid import UUID
 from decimal import Decimal
 from typing import ClassVar, TYPE_CHECKING, Any
 from app.shared.errors import AppError
+from app.domain.dto.event import EventOccurrence
 
 from .base import DomainEvent
 
@@ -16,7 +17,8 @@ class PurchaseSettledPayload(BaseModel):
     resource: str
     reference: str
     resource_id: UUID
-    slug: str
+    event_id: str
+    occurrence_id: str
     settlement_data: list[Any]  # TODO: Resolve circular Deps
 
     model_config = {"frozen": True}
@@ -28,10 +30,12 @@ class PurchaseSettledEvent(DomainEvent[PurchaseSettledPayload]):
 
     @classmethod
     def create(cls, txn: "Transaction"):
-        slug = txn.metadata.get("slug", None) if txn.metadata else None
+        event = txn.metadata.get("event", None) if txn.metadata else None
 
-        if not slug:
-            raise AppError("Malformed transaction. Slug not found", 400)
+        if not event:
+            raise AppError("Malformed transaction. Event not found in metadata", 400)
+
+        parsed = EventOccurrence.model_validate(event)
 
         return cls(
             aggregate_id=str(txn.reference),
@@ -41,7 +45,8 @@ class PurchaseSettledEvent(DomainEvent[PurchaseSettledPayload]):
                 resource_id=txn.resource_id,
                 user_id=txn.user_id,
                 reference=str(txn.reference),
-                slug=slug,
+                event_id=parsed.id,
+                occurrence_id=parsed.occurrence,
                 settlement_data=txn.settlement_data,
             ),
         )

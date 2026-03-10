@@ -28,6 +28,8 @@ class ListTransactionUseCase:
             limit=req.page_size,
             user_id=req.user_id,
             ticket_ids=req.ticket_ids,
+            occurrence=req.occurrence,
+            event=req.event,
         )
 
         return PaginatedResponseDto.create(

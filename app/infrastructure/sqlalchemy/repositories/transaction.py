@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_, or_, cast, String
 
 from app.domain.dto.transaction import TransactionFilter
 from app.domain.entities.transaction import Transaction
@@ -97,17 +97,49 @@ class SqlAlchemyTransactionRepository(ITransactionRepository):
         limit: int,
         user_id: UUID,
         ticket_ids: list[UUID],
+        event: UUID | None,
+        occurrence: UUID | None,
     ) -> tuple[list[Transaction], int]:
-        base_stmt = select(SqlAlchemyTransaction).where(
-            SqlAlchemyTransaction.user_id == user_id
-        )
+        base_stmt = select(SqlAlchemyTransaction)
 
         if len(ticket_ids) > 0:
-            # filter query where resource = ticket and resource_id in ticket_ids
-            base_stmt = base_stmt.where(
-                SqlAlchemyTransaction.resource == "ticket",  # or ResourceType.TICKET
+            ticket_condition = and_(
+                SqlAlchemyTransaction.resource == "ticket",
                 SqlAlchemyTransaction.resource_id.in_(ticket_ids),
             )
+
+            if event:
+                # Build event condition
+                event_condition = and_(
+                    SqlAlchemyTransaction.user_id == user_id,  # add user_id here too
+                    SqlAlchemyTransaction.metadata_["event"]["id"].astext == str(event),
+                )
+
+                if occurrence:
+                    event_condition = and_(
+                        event_condition,
+                        SqlAlchemyTransaction.metadata_["event"]["occurrence"].astext
+                        == str(occurrence),
+                    )
+
+                base_stmt = base_stmt.where(
+                    and_(
+                        SqlAlchemyTransaction.user_id == user_id,
+                        or_(ticket_condition, event_condition),
+                    )
+                )
+            else:
+                base_stmt = base_stmt.where(
+                    SqlAlchemyTransaction.user_id == user_id,
+                    ticket_condition,
+                )
+        else:
+            base_stmt = base_stmt.where(SqlAlchemyTransaction.user_id == user_id)
+
+        # Or with parameters (won't bind literals)
+        compiled = base_stmt.compile()
+        print(f"SQL: {compiled}")
+        print(f"Parameters: {compiled.params}")
 
         # -----------------------
         # 1. Get total count

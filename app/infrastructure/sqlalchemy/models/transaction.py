@@ -97,7 +97,9 @@ class SqlAlchemyTransaction(Base):
     )
 
     metadata_: Mapped[Optional[dict]] = mapped_column(
-        JSON, nullable=True, name="metadata"
+        JSONB,
+        nullable=True,
+        name="metadata",
     )
 
     parent_id: Mapped[Optional[PyUUID]] = mapped_column(

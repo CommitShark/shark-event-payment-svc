@@ -37,10 +37,10 @@ class GetUserContactInfoResponse(_message.Message):
     def __init__(self, error: _Optional[str] = ..., email: _Optional[str] = ..., phone: _Optional[str] = ..., device: _Optional[str] = ...) -> None: ...
 
 class GetEventOrganizerRequest(_message.Message):
-    __slots__ = ("slug",)
-    SLUG_FIELD_NUMBER: _ClassVar[int]
-    slug: str
-    def __init__(self, slug: _Optional[str] = ...) -> None: ...
+    __slots__ = ("event_id",)
+    EVENT_ID_FIELD_NUMBER: _ClassVar[int]
+    event_id: str
+    def __init__(self, event_id: _Optional[str] = ...) -> None: ...
 
 class GetEventOrganizerResponse(_message.Message):
     __slots__ = ("error", "user_id")

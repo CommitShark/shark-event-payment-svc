@@ -7,7 +7,8 @@ from .extra import ExtraOrderIntent
 
 class GetChargeReqDto(BaseModel):
     ticket_type_id: UUID
-    slug: str
+    event_id: str
+    occurrence_id: str
     quantity: int
     extras: list[ExtraOrderIntent] | None = None
 

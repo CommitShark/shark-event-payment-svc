@@ -9,3 +9,8 @@ class ExtraDto(BaseModel):
     version: int
     price: Decimal
     quantity_available: int
+
+
+class EventOccurrence(BaseModel):
+    id: str
+    occurrence: str

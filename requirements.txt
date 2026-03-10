@@ -34,11 +34,14 @@ pydantic==2.12.5
 pydantic-settings==2.12.0
 pydantic_core==2.41.5
 python-dotenv==1.2.1
+redis==7.3.0
 setuptools==80.9.0
+-e git+https://github.com/pelDev/shark-event-payment-svc.git@466943bad7adc4e05ddb1693ff0311c2f187bdeb#egg=shark_event
 sniffio==1.3.1
 SQLAlchemy==2.0.44
 starlette==0.50.0
 tabulate==0.9.0
+types-grpcio==1.0.0.20251009
 types-setuptools==80.9.0.20250822
 types-tabulate==0.9.0.20241207
 typing-inspection==0.4.2

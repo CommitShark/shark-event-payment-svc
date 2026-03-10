@@ -10,9 +10,10 @@ from app.infrastructure.sqlalchemy.repositories import (
 )
 from app.infrastructure.grpc import grpc_client
 from app.infrastructure.ports import GrpcTicketService, GrpcUserService
-from app.domain.ports import IEventBus, IPaymentAdapter
+from app.domain.ports import IEventBus, IPaymentAdapter, ICacheService
 from app.infrastructure.ports.kafka_event_bus import kafka_event_bus
 from app.infrastructure.ports.paystack_adapter import get_PaystackAdapter
+from app.infrastructure.cache import get_RedisCacheService
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
@@ -22,6 +23,10 @@ async def get_db() -> AsyncIterator[AsyncSession]:
 
 def get_event_bus() -> IEventBus:
     return kafka_event_bus
+
+
+def get_ICacheService() -> ICacheService:
+    return get_RedisCacheService()
 
 
 def get_txn_repo(

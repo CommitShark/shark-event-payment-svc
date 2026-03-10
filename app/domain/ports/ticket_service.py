@@ -18,6 +18,9 @@ class ITicketService(Protocol):
     async def mark_reservation_as_paid(self, reservation_id: str, amount: Decimal): ...
 
     @abstractmethod
+    async def cancel_reservation(self, reservation_id: str): ...
+
+    @abstractmethod
     async def get_reservation_extra_orders(
         self,
         reservation_id: str,

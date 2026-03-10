@@ -1,5 +1,4 @@
 import logging
-import sys
 import grpc  # type: ignore
 from typing import cast, Type, Any
 from fastapi import FastAPI, Request
@@ -7,7 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.config import grpc_config, settings
+from app.config import grpc_config, settings, redis_config
 from app.config.http import HttpSettings
 from app.config.sqlalchemy import DatabaseSettings
 from app.shared.errors import AppError
@@ -21,6 +20,7 @@ from app.infrastructure.ports.paystack_adapter import (
     get_PaystackAdapter,
     dispose_PaystackAdapter,
 )
+from app.infrastructure.cache import get_RedisCacheService
 from app.infrastructure.ports.http_event_service import HttpEventService
 from app.application.event_handlers import TransactionEventHandler
 from app.utils.external_api_client import ExternalAPIClient
@@ -70,6 +70,9 @@ async def app_lifespan(app: FastAPI):
 
     app.state.event_service = event_service
 
+    cache_service = get_RedisCacheService()
+    app.state.cache_service = cache_service
+
     await setup_handlers(kafka_event_bus)
     await kafka_event_bus.connect()
     await kafka_event_bus.start_consuming()
@@ -90,6 +93,7 @@ async def app_lifespan(app: FastAPI):
     # 4. Cleanup
     await grpc_client.close_ticket_grpc_client()
     await grpc_client.close_user_grpc_client()
+    await cache_service.dispose()
     await event_svc_client.client.aclose()
     await dispose_PaystackAdapter()
     await kafka_event_bus.disconnect()

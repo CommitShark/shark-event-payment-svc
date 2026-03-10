@@ -11,7 +11,17 @@ service GrpcTicketingService {
 
   rpc MarkReservationAsPaid(MarkReservationAsPaidRequest) returns (MarkReservationAsPaidResponse);
 
+  rpc CancelReservation(CancelReservationRequest) returns (CancelReservationResponse);
+
   rpc GetReservationExtraOrders(GetReservationExtraOrdersRequest) returns (GetReservationExtraOrdersResponse);
+}
+
+message CancelReservationRequest {
+    string reservation_id = 1;
+}
+
+message CancelReservationResponse {
+    optional string error = 1;
 }
 
 message MarkReservationAsPaidRequest {

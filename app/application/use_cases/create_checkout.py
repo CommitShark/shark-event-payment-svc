@@ -2,7 +2,7 @@ import json
 from decimal import Decimal
 from app.config import settings
 from app.utils.signing import sign_payload
-from app.shared.errors import AppError
+from app.shared.errors import AppError, ErrorCodes
 from app.domain.ports import ITicketService, IPaymentAdapter
 
 from app.application.dto.checkout import CheckoutMetaData, CreateCheckoutReqDto
@@ -124,15 +124,27 @@ class CreateCheckoutUseCase:
             else Decimal(0)
         )
 
-        link = await self._payment_adapter.create_checkout_link(
-            amount=base_amount + calculated_charge,
-            reference=req.reservation_id,
-            callback_url=paystack_config.ticket_purchase_callback.format(
-                slug=req.slug,
-                reservation=req.reservation_id,
-            ),
-            email=req.email,
-            metadata=metadata.model_dump(),
-        )
+        try:
+            link = await self._payment_adapter.create_checkout_link(
+                amount=base_amount + calculated_charge,
+                reference=req.reservation_id,
+                callback_url=paystack_config.ticket_purchase_callback.format(
+                    slug=req.slug,
+                    reservation=req.reservation_id,
+                ),
+                email=req.email,
+                metadata=metadata.model_dump(),
+            )
+        except AppError as e:
+            if e.error_code == ErrorCodes.DUPLICATE_REFERENCE:
+                await self._ticket_service.cancel_reservation(req.reservation_id)
+
+                raise AppError(
+                    message="Duplicate transaction detected. Please try again.",
+                    status_code=400,
+                    error_code=ErrorCodes.DUPLICATE_REFERENCE,
+                ) from e
+
+            raise
 
         return link

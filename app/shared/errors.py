@@ -14,6 +14,7 @@ class ErrorCodes(str, Enum):
     INVALID_TXN_PIN = "INVALID_TXN_PIN"
     NO_TXN_PIN = "NO_TXN_PIN"
     NO_WITHDRAW_ACCOUNT = "NO_WITHDRAW_ACCOUNT"
+    DUPLICATE_REFERENCE = "DUPLICATE_REFERENCE"
 
 
 class AppError(Exception):

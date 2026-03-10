@@ -10,7 +10,7 @@ from typing import TypeVar, Generic, Optional, Dict, Any
 
 from app.config import settings, paystack_config
 from app.domain.ports import IPaymentAdapter
-from app.shared.errors import AppError, ErrorCodes
+from app.shared.errors import AppError, ErrorCodes, InternalAppError
 from app.utils.external_api_client import ExternalAPIClient
 from app.domain.dto import BankItem, ExternalTransaction, PersonalAccount
 
@@ -22,6 +22,12 @@ logger = logging.getLogger(__name__)
 
 class BaseResDto(BaseModel):
     status: bool
+
+
+class PaystacKError(BaseResDto):
+    message: str
+    type: str
+    code: str
 
 
 class BaseResWithDataDto(BaseModel, Generic[T]):
@@ -394,10 +400,24 @@ class PaystackAdapter(IPaymentAdapter):
         if metadata:
             payload["metadata"] = json.dumps(metadata)
 
-        response = await self._client.post(
-            endpoint="/transaction/initialize",
-            data=payload,
-        )
+        try:
+            response = await self._client.post(
+                endpoint="/transaction/initialize",
+                data=payload,
+            )
+        except InternalAppError as e:
+            print(f"InternalAppError: {e.payload}")
+
+            if e.payload:
+                info = PaystacKError.model_validate(e.payload)
+                if info.code == "duplicate_reference":
+                    raise AppError(
+                        status_code=500,
+                        error_code=ErrorCodes.DUPLICATE_REFERENCE,
+                        message=info.message,
+                    )
+
+            raise
 
         try:
             parsed_res = InitiateTransactionResDto(**response)

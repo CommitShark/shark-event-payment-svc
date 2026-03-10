@@ -15,7 +15,7 @@ from app.infrastructure.sqlalchemy.repositories import (
     SqlAlchemyTransactionRepository,
     SqlAlchemyWalletRepository,
 )
-from app.domain.ports import IPaymentAdapter, IEventBus, IEventService
+from app.domain.ports import IPaymentAdapter, IEventBus, IEventService, ICacheService
 from app.infrastructure.ports import GrpcTicketService, GrpcUserService
 from app.domain.services import ChargeCalculationService
 from app.application.use_cases import (
@@ -52,6 +52,16 @@ def get_IEventBus(
 
 
 EventBusDep = Annotated[IEventBus, Depends(get_IEventBus)]
+
+
+def get_ICacheService(request: Request) -> ICacheService:
+    cache_service = getattr(request.app.state, "cache_service", None)
+    if not cache_service:
+        raise RuntimeError("Cache service not initialized")
+    return cache_service
+
+
+CacheServiceDep = Annotated[ICacheService, Depends(get_ICacheService)]
 
 
 def get_IEventService(request: Request) -> IEventService:

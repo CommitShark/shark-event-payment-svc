@@ -153,9 +153,13 @@ class SqlAlchemyTransaction(Base):
                 [ChargeData.model_validate(c) for c in self.charge_data]
                 if isinstance(self.charge_data, list)
                 else (
-                    ChargeData.model_validate(self.charge_data)
-                    if self.charge_data
-                    else None
+                    ChargeData.model_validate_json(self.charge_data)
+                    if isinstance(self.charge_data, str)
+                    else (
+                        ChargeData.model_validate(self.charge_data)
+                        if isinstance(self.charge_data, dict)
+                        else None
+                    )
                 )
             ),
             settlement_status=self.settlement_status,

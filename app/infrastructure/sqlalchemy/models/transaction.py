@@ -166,7 +166,12 @@ class SqlAlchemyTransaction(Base):
             transaction_type=self.transaction_type,
             transaction_direction=self.transaction_direction,
             settlement_data=[
-                SettlementData.model_validate(s) for s in self.settlement_data
+                (
+                    SettlementData.model_validate(s)
+                    if isinstance(s, dict)
+                    else SettlementData.model_validate_json(s)
+                )
+                for s in self.settlement_data
             ],
             created_at=self.created_at,
             metadata=self.metadata_,

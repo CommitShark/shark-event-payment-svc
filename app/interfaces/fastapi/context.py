@@ -11,6 +11,7 @@ token_scheme = APIKeyCookie(name="access_token")
 
 class UserContext(BaseModel):
     user_id: UUID
+    is_admin: bool = False
 
 
 def get_tenant_id(
@@ -32,6 +33,7 @@ def get_user_context(request: Request) -> UserContext:
 
     # Common header names used by API gateways
     user_id_header = request.headers.get("X-User-ID")
+    user_role_header = request.headers.get("X-User-Role")
 
     # Validate required headers
     if not user_id_header:
@@ -44,11 +46,24 @@ def get_user_context(request: Request) -> UserContext:
         # Let Pydantic handle validation and type conversion
         return UserContext(
             user_id=UUID(user_id_header),
+            is_admin=user_role_header == "admin",
         )
     except ValueError as e:
         raise HTTPException(
             status_code=400, detail=f"Invalid user context data: {str(e)}"
         )
+
+
+def admin_guard(
+    user_context: UserContext = Depends(get_user_context),
+):
+    if not user_context.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed",
+        )
+
+    return user_context
 
 
 def get_optional_user_context(request: Request) -> Optional[UserContext]:
@@ -95,3 +110,4 @@ OptionalUserContextDep = Annotated[
 TenantIDDep = Annotated[UUID, Depends(get_tenant_id)]
 VisitorIdDep = Annotated[str, Depends(get_visitor_id)]
 ProtectedDep = Annotated[str, Depends(get_access_token)]
+AdminUserContextDep = Annotated[UserContext, Depends(admin_guard)]

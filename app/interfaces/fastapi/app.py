@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.config import grpc_config, settings, redis_config
+from app.config import grpc_config, settings
 from app.config.http import HttpSettings
 from app.config.sqlalchemy import DatabaseSettings
 from app.shared.errors import AppError
@@ -24,7 +24,7 @@ from app.infrastructure.cache import get_RedisCacheService
 from app.infrastructure.ports.http_event_service import HttpEventService
 from app.application.event_handlers import TransactionEventHandler
 from app.utils.external_api_client import ExternalAPIClient
-from .endpoints.v1 import charges, checkout, wallet, webhook, public
+from .endpoints.v1 import charges, checkout, wallet, webhook, public, transaction
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +123,7 @@ def create_app() -> FastAPI:
     app.include_router(wallet.router)
     app.include_router(webhook.router)
     app.include_router(public.router)
+    app.include_router(transaction.router)
 
     logger.info(
         "FastAPI application created with root path: %s",

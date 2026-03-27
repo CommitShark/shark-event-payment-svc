@@ -8,7 +8,7 @@ from pydantic import (
 from enum import Enum
 from typing import Optional
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID, uuid4
 from app.shared.errors import AppError
 
@@ -116,7 +116,9 @@ class PriceRangeTier(BaseModel):
         """
         # Calculate percentage-based charge
         charge = (
-            (base_amount * self.percentage_rate / 100).quantize(Decimal("0.01"))
+            (base_amount * self.percentage_rate / 100).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
             if self.percentage_rate > 0
             else Decimal("0.00")
         )
@@ -281,7 +283,9 @@ class ChargeSettingVersion(BaseModel):
                 applicable.append(tier)
         return applicable
 
-    def calculate_charge(self, base_amount: Decimal) -> Decimal:
+    def calculate_charge(
+        self, base_amount: Decimal
+    ) -> tuple[Decimal, list[PriceRangeTier]]:
         """
         Calculate the charge for a given base amount using the appropriate tier(s).
 
@@ -305,10 +309,13 @@ class ChargeSettingVersion(BaseModel):
 
         if len(applicable_tiers) == 1 or not self.allow_overlap:
             # Single tier case (or overlaps not allowed)
-            return applicable_tiers[0].calculate_charge(base_amount)
+            return applicable_tiers[0].calculate_charge(base_amount), applicable_tiers
 
         # Multiple tiers case with overlaps allowed
-        return self._calculate_overlapping_charge(applicable_tiers, base_amount)
+        return (
+            self._calculate_overlapping_charge(applicable_tiers, base_amount),
+            applicable_tiers,
+        )
 
     def _calculate_overlapping_charge(
         self, applicable_tiers: list[PriceRangeTier], base_amount: Decimal

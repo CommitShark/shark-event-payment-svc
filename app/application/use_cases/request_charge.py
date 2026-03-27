@@ -62,7 +62,8 @@ class RequestChargeUseCase:
         # Calculate ticket charge
         ticket_charge_data = await self._charge_calc_service.get_charge_breakdown(
             charge_setting_id=charge.charge_setting_id,
-            base_amount=ticket_subtotal,
+            base_amount=ticket_base_price,
+            quantity=quantity,
         )
 
         if not ticket_charge_data:
@@ -77,7 +78,7 @@ class RequestChargeUseCase:
         # Add ticket charge group
         charges_response.append(
             {
-                "base_amount": ticket_charge_data["base_amount"],
+                "base_amount": str(ticket_subtotal),
                 "charge_setting_id": ticket_charge_data["charge_setting_id"],
                 "version_id": ticket_charge_data["version_id"],
                 "version_number": ticket_charge_data["version_number"],
@@ -139,6 +140,7 @@ class RequestChargeUseCase:
             extras_charge_data = await self._charge_calc_service.get_charge_breakdown(
                 charge_setting_id=extra_charge_setting.charge_setting_id,
                 base_amount=extras_subtotal,
+                quantity=1,
             )
 
             if not extras_charge_data:
@@ -184,6 +186,7 @@ class RequestChargeUseCase:
         charge_data = await self._charge_calc_service.get_charge_breakdown(
             charge_setting_id=charge.charge_setting_id,
             base_amount=amount,
+            quantity=1,
         )
 
         if not charge_data:
@@ -230,6 +233,7 @@ class RequestChargeUseCase:
         charge_data = await self._charge_calc_service.get_charge_breakdown(
             charge_setting_id=charge.charge_setting_id,
             base_amount=amount,
+            quantity=1,
         )
 
         if not charge_data:

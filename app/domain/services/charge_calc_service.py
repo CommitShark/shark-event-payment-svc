@@ -27,6 +27,7 @@ class ChargeCalculationService:
         self,
         charge_setting_id: UUID,
         base_amount: Decimal,
+        quantity: int,
         at_time: Optional[datetime] = None,
     ) -> Optional[dict]:
         """
@@ -45,12 +46,9 @@ class ChargeCalculationService:
             return None
 
         if not version.allow_overlap:
-            tier = version.find_tier(base_amount)
-
-            if tier is None:
-                return None
-
-            charge = tier.calculate_charge(base_amount)
+            charge, tiers = version.calculate_charge(base_amount)
+            total_charge = charge * quantity
+            tier = tiers[0]
 
             return {
                 "base_amount": str(base_amount),
@@ -60,19 +58,14 @@ class ChargeCalculationService:
                 "tier_name": tier.tier_name,
                 "tier_range": f"{tier.min_price} - {tier.max_price or 'unlimited'}",
                 "percentage_rate": str(tier.percentage_rate),
-                "calculated_charge": str(charge),
+                "calculated_charge": str(total_charge),
                 "min_cap_applied": tier.min_charge is not None
                 and charge == tier.min_charge,
                 "max_cap_applied": tier.max_charge is not None
                 and charge == tier.max_charge,
             }
         else:
-            tiers = version.find_applicable_tiers(base_amount)
-
-            if not tiers:
-                return None
-
-            charge = version.calculate_charge(base_amount)
+            charge, tiers = version.calculate_charge(base_amount)
 
             return {
                 "base_amount": str(base_amount),

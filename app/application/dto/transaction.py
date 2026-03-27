@@ -14,6 +14,7 @@ from app.domain.entities.value_objects import (
 class TransactionListDto(BaseModel):
     id: str
     reference: str
+    user_id: str
     amount: Decimal
     transaction_type: TransactionType
     transaction_direction: TransactionDirection
@@ -26,6 +27,7 @@ class TransactionListDto(BaseModel):
             id=str(txn.id),
             reference=str(txn.reference),
             amount=txn.amount,
+            user_id=str(txn.user_id),
             transaction_type=txn.transaction_type,
             transaction_direction=txn.transaction_direction,
             settlement_status=txn.settlement_status,

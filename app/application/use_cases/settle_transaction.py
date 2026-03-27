@@ -58,6 +58,9 @@ class SettleTicketPurchaseUseCase:
                 f"Transaction {txn.reference} missing event in metadata", 400
             )
 
+        ticket_meta = txn.metadata.get("ticket", None) if txn.metadata else None
+        ticket_quantity = int(ticket_meta.get("quantity", 1)) if ticket_meta else 1
+
         print(f"Transaction {txn.reference}: Get organizer with slug: {str(event)}")
         organizer = await self._user_service.get_event_organizer(
             event_id=EventOccurrence.model_validate(event).id,
@@ -101,12 +104,14 @@ class SettleTicketPurchaseUseCase:
 
         if has_extras:
             extras_total = ExtraOrderDto.calculate_total(orders)
-            ticket_amount = ticket_amount - (extras_total + extras_fee)
+            ticket_amount = ticket_amount - (extras_total + extras_fee + ticket_fee)
+        else:
+            ticket_amount = ticket_amount - ticket_fee
 
         print(f"Transaction {txn.reference}: Mark reservation as paid")
         await self._ticket_service.mark_reservation_as_paid(
             str(txn.reference),
-            ticket_fee,
+            (ticket_amount + ticket_fee) / ticket_quantity,
         )
         print(
             f"Transaction {txn.reference}: Marked reservation as paid. Found {len(orders)} extra orders"
@@ -115,7 +120,7 @@ class SettleTicketPurchaseUseCase:
         # Credit the event organizer (amount paid minus platform fee)
         txn.add_settlement(
             SettlementData(
-                amount=ticket_amount - ticket_fee,
+                amount=ticket_amount,
                 recipient_user=UUID(organizer),
                 transaction_type="sale",
                 role="organizer",

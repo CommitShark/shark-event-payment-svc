@@ -110,6 +110,10 @@ class VerifyTicketPurchaseTransactionUseCase:
                     "id": metadata.ticket_charge.event_id,
                     "occurrence": metadata.ticket_charge.occurrence_id,
                 },
+                "ticket": {
+                    "id": metadata.ticket_charge.ticket_type_id,
+                    "quantity": metadata.ticket_charge.quantity,
+                },
             },
         )
 

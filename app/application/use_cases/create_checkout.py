@@ -107,6 +107,7 @@ class CreateCheckoutUseCase:
                     else None
                 ),
                 "signature": metadata_signature,
+                "action": "ticket_purchase",
             }
         )
 

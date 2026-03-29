@@ -49,6 +49,7 @@ async def verify_ticket_purchase(
 ):
     await use_case.execute(
         reference=req.reference,
+        validate_only=True,
     )
 
     return VerifyTicketPurchaseResDto(

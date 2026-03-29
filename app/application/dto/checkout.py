@@ -25,6 +25,7 @@ class CheckoutMetaData(BaseModel):
     ticket_charge: TicketCheckoutChargeMetadata
     extras_charge: CheckoutChargeMetadata | None
     signature: str
+    action: str
 
 
 class DepositCheckoutMetaData(BaseModel):

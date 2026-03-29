@@ -1,5 +1,4 @@
 import logging
-import json
 from decimal import Decimal
 from uuid import UUID
 
@@ -27,7 +26,12 @@ class VerifyTicketPurchaseTransactionUseCase:
         self._txn_repo = txn_repo
         self._event_bus = event_bus
 
-    async def execute(self, reference: str, user_id: UUID | None = None):
+    async def execute(
+        self,
+        reference: str,
+        user_id: UUID | None = None,
+        validate_only: bool = False,
+    ) -> None:
         # Check if transaction reference has already been recorded
         existing_txn = await self._txn_repo.get_by_reference_or_none(UUID(reference))
 
@@ -71,6 +75,16 @@ class VerifyTicketPurchaseTransactionUseCase:
         if expected_signature != metadata.signature:
             print("Signature mismatch")
             raise AppError("Malformed transaction. Please contact support", 500)
+
+        if user_id and user_id != UUID(metadata.ticket_charge.user):
+            logger.debug(
+                f"User mismatch. \nOriginal User = {metadata.ticket_charge.user} \nUser Attempting Validation = {user_id}"
+            )
+            raise AppError("Cannot validate transaction initiated by another user", 403)
+
+        if validate_only:
+            print("Validation only flag is set. Skipping transaction creation.")
+            return
 
         charge_data: list[ChargeData] = [
             ChargeData(
@@ -116,12 +130,6 @@ class VerifyTicketPurchaseTransactionUseCase:
                 },
             },
         )
-
-        if user_id and user_id != txn.user_id:
-            logger.debug(
-                f"User mismatch. \nOriginal User = {txn.user_id} \nUser Attempting Validation = {user_id}"
-            )
-            raise AppError("Cannot validate transaction initiated by another user", 403)
 
         await self._txn_repo.save(txn)
 

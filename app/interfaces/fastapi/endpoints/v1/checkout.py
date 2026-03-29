@@ -78,6 +78,7 @@ async def verify_ticket_purchase(
     await use_case.execute(
         user_id=context.user_id,
         reference=req.reference,
+        validate_only=True,
     )
 
     return VerifyTicketPurchaseResDto(

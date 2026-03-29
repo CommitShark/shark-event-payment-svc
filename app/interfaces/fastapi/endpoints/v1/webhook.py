@@ -1,13 +1,16 @@
+import json
 import logging
 import hashlib
 import hmac
 from fastapi import APIRouter, Request
 from datetime import datetime, timezone
 from typing import cast, Dict, Any, Type
+from uuid import UUID
 
 from app.config import settings
 from app.utils.signing import sign_payload
 from app.application.dto.base import BaseResponseDTO
+from app.application.dto.checkout import CheckoutMetaData
 from app.shared.errors import AppError
 from app.infrastructure.ports.paystack_adapter import (
     PaystackEvent,
@@ -18,7 +21,7 @@ from app.infrastructure.ports.paystack_adapter import (
 from app.domain.events import CompleteWithdrawEvent, CompleteFundingEvent
 from app.config import paystack_config
 
-from ...di import EventBusDep
+from ...di import EventBusDep, VerifyTicketPurchaseTransactionUseCaseDep
 
 router = APIRouter(
     prefix="/v1/webhook",
@@ -35,7 +38,11 @@ logger = logging.getLogger("paystack-webhook")
 
 
 @router.post("/paystack", response_model=BaseResponseDTO)
-async def process_paystack_event(req: Request, event_bus: EventBusDep):
+async def process_paystack_event(
+    req: Request,
+    event_bus: EventBusDep,
+    verify_txn_uc: VerifyTicketPurchaseTransactionUseCaseDep,
+):
     print("🔔 Incoming Paystack webhook")
 
     raw_body = await req.body()
@@ -68,8 +75,6 @@ async def process_paystack_event(req: Request, event_bus: EventBusDep):
         print("❌ Failed to parse webhook JSON")
         raise AppError("Invalid JSON", 400)
 
-    print(f"Webhook JSON: {body}")
-
     event_type = body.get("event")
     print(f"🔍 Paystack event type: {event_type}")
 
@@ -92,8 +97,6 @@ async def process_paystack_event(req: Request, event_bus: EventBusDep):
         print("❌ Schema validation failed")
         raise AppError("Invalid event schema", 400)
 
-    print(f"Parsed event: {parsed}")
-
     # Process supported event
     if parsed.event == "transfer.success":
         transfer_data = cast(PaystackTransferSuccessEvent, parsed.data)
@@ -115,8 +118,9 @@ async def process_paystack_event(req: Request, event_bus: EventBusDep):
         charge_data = cast(ChargeData, parsed.data)
         metadata = charge_data.metadata
         print(
-            f"Charge Success for reference={charge_data.reference} status={charge_data.status}"
-            f"Metadata={charge_data.metadata or "No Metadata"}"
+            f"Charge Success for reference={charge_data.reference} status={charge_data.status}\n"
+            f"Metadata={json.dumps(charge_data.metadata) or "No Metadata"}\n"
+            f"Amount={charge_data.amount} paid_at={charge_data.paid_at}\n"
         )
 
         if metadata and metadata.get("action") == "deposit":
@@ -141,6 +145,22 @@ async def process_paystack_event(req: Request, event_bus: EventBusDep):
 
                 print(f"📤 Publishing CompleteWithdrawEvent: {event}")
                 await event_bus.publish(event)
+
+        if metadata and metadata.get("action") == "ticket_purchase":
+            reference = charge_data.reference
+            print(f"🔍 Verifying transaction for reference: {reference}")
+
+            if "referrer" in metadata:
+                _ = metadata.pop("referrer")
+
+            checkout_metadata = CheckoutMetaData.model_validate(metadata)
+
+            await verify_txn_uc.execute(
+                reference=reference,
+                user_id=UUID(checkout_metadata.ticket_charge.user),
+                validate_only=False,
+            )
+            print(f"✅ Transaction verified for reference: {reference}")
 
     print(f"🎉 Paystack event processed successfully: {parsed.event}")
 

@@ -3,7 +3,7 @@ import logging
 import traceback
 
 from decimal import Decimal
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, ConfigDict
 from datetime import datetime
 from uuid import UUID
 from typing import TypeVar, Generic, Optional, Dict, Any
@@ -133,9 +133,11 @@ class Customer(BaseModel):
     email: str
     customer_code: str
     phone: Optional[str]
-    metadata: Dict[str, Any]
+    metadata: Optional[Dict[str, Any]]
     risk_action: str
     international_format_phone: Optional[str]
+
+    model_config = ConfigDict(extra="ignore")
 
 
 class ChargeData(BaseModel):
@@ -153,6 +155,8 @@ class ChargeData(BaseModel):
     ip_address: Optional[str]
 
     metadata: Optional[Dict[str, Any]]
+    fees_breakdown: Optional[Dict[str, Any]]
+    fees: Optional[Decimal]
     customer: Customer
 
     plan: Dict[str, Any]
@@ -161,13 +165,17 @@ class ChargeData(BaseModel):
 
     order_id: Optional[str]
     paidAt: Optional[datetime]
-    requested_amount: Optional[int]
+    requested_amount: Optional[Decimal]
     pos_transaction_data: Optional[Any]
+
+    model_config = ConfigDict(extra="ignore")
 
 
 class PaystackEvent(BaseModel, Generic[T]):
     event: str
     data: T
+
+    model_config = ConfigDict(extra="ignore")
 
 
 class PaystackAdapter(IPaymentAdapter):

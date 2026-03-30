@@ -43,7 +43,9 @@ async def process_paystack_event(
     event_bus: EventBusDep,
     verify_txn_uc: VerifyTicketPurchaseTransactionUseCaseDep,
 ):
-    print("🔔 Incoming Paystack webhook")
+    print(
+        f"🔔 Incoming Paystack webhook Date & Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}"
+    )
 
     raw_body = await req.body()
     print(f"Raw body received ({len(raw_body)} bytes)")
@@ -95,6 +97,7 @@ async def process_paystack_event(
         print("✅ Event schema validated successfully")
     except Exception:
         print("❌ Schema validation failed")
+        print(f"Received payload: {json.dumps(body)}")
         raise AppError("Invalid event schema", 400)
 
     # Process supported event

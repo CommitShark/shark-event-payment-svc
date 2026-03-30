@@ -193,7 +193,11 @@ class TransactionEventHandler(IEventHandler):
                     )
                 else:
                     raise AppError(f"{txn} not implemented", 500)
-            elif txn.transaction_type == "sale" or txn.transaction_type == "commission":
+            elif (
+                txn.transaction_type == "sale"
+                or txn.transaction_type == "commission"
+                or txn.transaction_type == "fee"
+            ):
                 await self._fund_account_from_txn(
                     txn=txn,
                     txn_repo=txn_repo,

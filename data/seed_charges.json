@@ -66,14 +66,14 @@
                 {
                     "tier_name": "NIP Fee + VAT",
                     "min_price": "0",
-                    "max_price": "10000",
+                    "max_price": "9999.99",
                     "percentage_rate": "2",
                     "additional_charge": "10",
                     "max_charge": "12"
                 },
                 {
                     "tier_name": "NIP Fee + VAT",
-                    "min_price": "10000.01",
+                    "min_price": "10000",
                     "max_price": "50000",
                     "percentage_rate": "2",
                     "additional_charge": "25",

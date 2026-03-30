@@ -184,6 +184,23 @@ class Transaction(BaseModel):
         elif self.transaction_type == "withdrawal":
             self._events.append(NotifyEvent.withdrawal_complete(self))
 
+    def create_fee_transaction(self, user_id: UUID) -> Optional["Transaction"]:
+        fee_amount = self.get_total_charge_amount()
+        if fee_amount > Decimal("0"):
+            return Transaction.create(
+                amount=fee_amount,
+                user_id=user_id,
+                resource=self.resource,
+                resource_id=self.resource_id,
+                reference=self.id,
+                occurred_on=datetime.now(timezone.utc),
+                transaction_type="fee",
+                source=self.source,
+                settlement_status="pending",
+                parent_id=self.id,
+            )
+        return None
+
     def add_settlement(self, data: SettlementData):
         if self.settlement_status != "pending":
             raise AppError(
@@ -245,6 +262,7 @@ class Transaction(BaseModel):
                 "sale": "credit",
                 "commission": "credit",
                 "withdrawal": "debit",
+                "fee": "credit",
             }
             transaction_direction = direction_map[transaction_type]
 

@@ -19,6 +19,7 @@ TransactionType = Literal[
     "sale",
     "commission",
     "withdrawal",
+    "fee",
 ]
 TransactionDirection = Literal["credit", "debit"]
 TransactionSource = Literal["wallet", "payment_provider"]

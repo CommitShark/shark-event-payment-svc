@@ -107,7 +107,7 @@ class SubmitWithdrawalUseCase:
             resource_id=uuid4(),
             source="wallet",
             transaction_type="withdrawal",
-            metadata={"mode": "manual"},
+            metadata=None,
             user_id=UUID(user_id),
         )
 

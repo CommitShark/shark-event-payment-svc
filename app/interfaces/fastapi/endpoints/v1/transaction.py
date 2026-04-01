@@ -1,9 +1,20 @@
 from fastapi import APIRouter, Query
 from typing import Optional
-from app.application.dto.base import PaginatedResponseDto, PaginatedReqDto
-from app.application.dto.transaction import TransactionListDto
+from uuid import UUID
+from app.application.dto.base import (
+    PaginatedResponseDto,
+    PaginatedReqDto,
+    BaseResponseDTO,
+)
+from app.application.dto.transaction import (
+    TransactionListDto,
+    TransactionDetailsDto,
+    UpdateTransactionStatusReqDto,
+)
+from app.application.dto import wallet
+
 from app.interfaces.fastapi.context import AdminUserContextDep
-from app.interfaces.fastapi.di import TxnRepoDep
+from app.interfaces.fastapi.di import TxnRepoDep, UpdateTransactionStatusUseCaseDep
 
 from app.domain.entities.value_objects import (
     TransactionSettlementStatus,
@@ -13,6 +24,27 @@ from app.domain.dto import TransactionFilter
 
 
 router = APIRouter(prefix="/v1/transactions", tags=["Transactions"])
+
+
+@router.patch(
+    "/admin/{transaction_id}/status",
+    response_model=BaseResponseDTO,
+)
+async def update_transaction_status(
+    _: AdminUserContextDep,
+    use_case: UpdateTransactionStatusUseCaseDep,
+    transaction_id: UUID,
+    req: UpdateTransactionStatusReqDto,
+):
+    await use_case.execute(
+        wallet.UpdateTransactionStatusReqDto(
+            id=transaction_id,
+            status=req.status,
+            reason=req.reason,
+        )
+    )
+
+    return BaseResponseDTO(success=True)
 
 
 @router.get(
@@ -47,3 +79,16 @@ async def get_transactions_admin(
         page_size=req.limit,
         total=total,
     )
+
+
+@router.get(
+    "/admin/{transaction_id}",
+    response_model=TransactionDetailsDto,
+)
+async def get_transaction_detail_admin(
+    context: AdminUserContextDep,
+    txn_repo: TxnRepoDep,
+    transaction_id: UUID,
+):
+    transaction = await txn_repo.get_by_id(transaction_id)
+    return TransactionDetailsDto.from_domain(transaction)

@@ -30,6 +30,7 @@ from app.application.use_cases import (
     SaveBankUseCase,
     SubmitWithdrawalUseCase,
     CreateAttendeeDepositCheckoutUseCase,
+    UpdateTransactionStatusUseCase,
 )
 from app.infrastructure.grpc import grpc_client
 
@@ -274,4 +275,26 @@ def get_CreateAttendeeDepositCheckoutUseCase(
 CreateAttendeeDepositCheckoutUseCaseDep = Annotated[
     CreateAttendeeDepositCheckoutUseCase,
     Depends(get_CreateAttendeeDepositCheckoutUseCase),
+]
+
+
+def get_UpdateTransactionStatusUseCase(
+    wallet_repo: WalletRepoDep,
+    txn_repo: TxnRepoDep,
+    event_bus: EventBusDep,
+):
+    user_stub = grpc_client.get_user_grpc_stub()
+    user_service = GrpcUserService(user_stub)
+
+    return UpdateTransactionStatusUseCase(
+        wallet_repo,
+        txn_repo,
+        event_bus,
+        user_service,
+    )
+
+
+UpdateTransactionStatusUseCaseDep = Annotated[
+    UpdateTransactionStatusUseCase,
+    Depends(get_UpdateTransactionStatusUseCase),
 ]

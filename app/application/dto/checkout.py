@@ -78,3 +78,4 @@ class PublicVerifyTicketPurchaseReqDto(VerifyTicketPurchaseReqDto):
 
 class VerifyTicketPurchaseResDto(BaseModel):
     success: bool
+    amount: Decimal

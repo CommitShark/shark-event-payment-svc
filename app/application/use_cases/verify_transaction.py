@@ -31,7 +31,7 @@ class VerifyTicketPurchaseTransactionUseCase:
         reference: str,
         user_id: UUID | None = None,
         validate_only: bool = False,
-    ) -> None:
+    ) -> Decimal:
         # Check if transaction reference has already been recorded
         existing_txn = await self._txn_repo.get_by_reference_or_none(UUID(reference))
 
@@ -40,7 +40,7 @@ class VerifyTicketPurchaseTransactionUseCase:
                 "transaction for reference %s already exists",
                 reference,
             )
-            return
+            return existing_txn.amount
 
         ext_transaction = await self._payment_adapter.get_valid_transaction(reference)
 
@@ -84,7 +84,7 @@ class VerifyTicketPurchaseTransactionUseCase:
 
         if validate_only:
             print("Validation only flag is set. Skipping transaction creation.")
-            return
+            return ext_transaction.amount
 
         charge_data: list[ChargeData] = [
             ChargeData(
@@ -135,3 +135,5 @@ class VerifyTicketPurchaseTransactionUseCase:
 
         for e in txn.events:
             await self._event_bus.publish(e)
+
+        return ext_transaction.amount

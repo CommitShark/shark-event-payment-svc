@@ -25,37 +25,45 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fticketing.proto\x12\tticketing\x1a\x1fgoogle/protobuf/timestamp.proto\"2\n\x18\x43\x61ncelReservationRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\"9\n\x19\x43\x61ncelReservationResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_error\"M\n\x1cMarkReservationAsPaidRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\x12\x15\n\rticket_amount\x18\x02 \x01(\t\"q\n\rExtraOrderDto\x12\x10\n\x08\x65xtra_id\x18\x01 \x01(\t\x12\x15\n\rextra_version\x18\x02 \x01(\x05\x12\x10\n\x08quantity\x18\x03 \x01(\x05\x12\x12\n\nunit_price\x18\x04 \x01(\t\x12\x11\n\trecipient\x18\x05 \x01(\t\":\n GetReservationExtraOrdersRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\"k\n!GetReservationExtraOrdersResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12(\n\x06orders\x18\x02 \x03(\x0b\x32\x18.ticketing.ExtraOrderDtoB\x08\n\x06_error\"=\n\x1dMarkReservationAsPaidResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_error\"/\n\x15GetTicketPriceRequest\x12\x16\n\x0eticket_type_id\x18\x01 \x01(\t\"F\n\x16GetTicketPriceResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x0e\n\x06\x61mount\x18\x02 \x01(\tB\x08\n\x06_error\"1\n\x17\x43heckReservationRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\"\x9a\x01\n\x0bReservation\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12.\n\ncreated_at\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nexpires_at\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0e\n\x06status\x18\x05 \x01(\t\"u\n\x18\x43heckReservationResponse\x12\x0e\n\x06\x65xists\x18\x01 \x01(\x08\x12\r\n\x05valid\x18\x02 \x01(\x08\x12+\n\x0breservation\x18\x03 \x01(\x0b\x32\x16.ticketing.Reservation\x12\r\n\x05\x65rror\x18\x04 \x01(\t2\x8e\x04\n\x14GrpcTicketingService\x12[\n\x10\x43heckReservation\x12\".ticketing.CheckReservationRequest\x1a#.ticketing.CheckReservationResponse\x12U\n\x0eGetTicketPrice\x12 .ticketing.GetTicketPriceRequest\x1a!.ticketing.GetTicketPriceResponse\x12j\n\x15MarkReservationAsPaid\x12\'.ticketing.MarkReservationAsPaidRequest\x1a(.ticketing.MarkReservationAsPaidResponse\x12^\n\x11\x43\x61ncelReservation\x12#.ticketing.CancelReservationRequest\x1a$.ticketing.CancelReservationResponse\x12v\n\x19GetReservationExtraOrders\x12+.ticketing.GetReservationExtraOrdersRequest\x1a,.ticketing.GetReservationExtraOrdersResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fticketing.proto\x12\tticketing\x1a\x1fgoogle/protobuf/timestamp.proto\"9\n ListOccurrenceTicketUsersRequest\x12\x15\n\roccurrence_id\x18\x01 \x01(\t\"5\n!ListOccurrenceTicketUsersResponse\x12\x10\n\x08user_ids\x18\x02 \x03(\t\"i\n\x17\x43reateGateTicketRequest\x12\x16\n\x0eticket_type_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x15\n\roccurrence_id\x18\x03 \x01(\t\x12\x0e\n\x06\x61mount\x18\x04 \x01(\t\"D\n\x18\x43reateGateTicketResponse\x12\n\n\x02qr\x18\x01 \x01(\t\x12\x12\n\x05\x65rror\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_error\"2\n\x18\x43\x61ncelReservationRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\"9\n\x19\x43\x61ncelReservationResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_error\"M\n\x1cMarkReservationAsPaidRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\x12\x15\n\rticket_amount\x18\x02 \x01(\t\"q\n\rExtraOrderDto\x12\x10\n\x08\x65xtra_id\x18\x01 \x01(\t\x12\x15\n\rextra_version\x18\x02 \x01(\x05\x12\x10\n\x08quantity\x18\x03 \x01(\x05\x12\x12\n\nunit_price\x18\x04 \x01(\t\x12\x11\n\trecipient\x18\x05 \x01(\t\":\n GetReservationExtraOrdersRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\"k\n!GetReservationExtraOrdersResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12(\n\x06orders\x18\x02 \x03(\x0b\x32\x18.ticketing.ExtraOrderDtoB\x08\n\x06_error\"=\n\x1dMarkReservationAsPaidResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_error\"/\n\x15GetTicketPriceRequest\x12\x16\n\x0eticket_type_id\x18\x01 \x01(\t\"F\n\x16GetTicketPriceResponse\x12\x12\n\x05\x65rror\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x0e\n\x06\x61mount\x18\x02 \x01(\tB\x08\n\x06_error\"1\n\x17\x43heckReservationRequest\x12\x16\n\x0ereservation_id\x18\x01 \x01(\t\"\x9a\x01\n\x0bReservation\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12.\n\ncreated_at\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nexpires_at\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0e\n\x06status\x18\x05 \x01(\t\"u\n\x18\x43heckReservationResponse\x12\x0e\n\x06\x65xists\x18\x01 \x01(\x08\x12\r\n\x05valid\x18\x02 \x01(\x08\x12+\n\x0breservation\x18\x03 \x01(\x0b\x32\x16.ticketing.Reservation\x12\r\n\x05\x65rror\x18\x04 \x01(\t2\xe3\x05\n\x14GrpcTicketingService\x12[\n\x10\x43heckReservation\x12\".ticketing.CheckReservationRequest\x1a#.ticketing.CheckReservationResponse\x12U\n\x0eGetTicketPrice\x12 .ticketing.GetTicketPriceRequest\x1a!.ticketing.GetTicketPriceResponse\x12j\n\x15MarkReservationAsPaid\x12\'.ticketing.MarkReservationAsPaidRequest\x1a(.ticketing.MarkReservationAsPaidResponse\x12^\n\x11\x43\x61ncelReservation\x12#.ticketing.CancelReservationRequest\x1a$.ticketing.CancelReservationResponse\x12v\n\x19GetReservationExtraOrders\x12+.ticketing.GetReservationExtraOrdersRequest\x1a,.ticketing.GetReservationExtraOrdersResponse\x12[\n\x10\x43reateGateTicket\x12\".ticketing.CreateGateTicketRequest\x1a#.ticketing.CreateGateTicketResponse\x12v\n\x19ListOccurrenceTicketUsers\x12+.ticketing.ListOccurrenceTicketUsersRequest\x1a,.ticketing.ListOccurrenceTicketUsersResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ticketing_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_CANCELRESERVATIONREQUEST']._serialized_start=63
-  _globals['_CANCELRESERVATIONREQUEST']._serialized_end=113
-  _globals['_CANCELRESERVATIONRESPONSE']._serialized_start=115
-  _globals['_CANCELRESERVATIONRESPONSE']._serialized_end=172
-  _globals['_MARKRESERVATIONASPAIDREQUEST']._serialized_start=174
-  _globals['_MARKRESERVATIONASPAIDREQUEST']._serialized_end=251
-  _globals['_EXTRAORDERDTO']._serialized_start=253
-  _globals['_EXTRAORDERDTO']._serialized_end=366
-  _globals['_GETRESERVATIONEXTRAORDERSREQUEST']._serialized_start=368
-  _globals['_GETRESERVATIONEXTRAORDERSREQUEST']._serialized_end=426
-  _globals['_GETRESERVATIONEXTRAORDERSRESPONSE']._serialized_start=428
-  _globals['_GETRESERVATIONEXTRAORDERSRESPONSE']._serialized_end=535
-  _globals['_MARKRESERVATIONASPAIDRESPONSE']._serialized_start=537
-  _globals['_MARKRESERVATIONASPAIDRESPONSE']._serialized_end=598
-  _globals['_GETTICKETPRICEREQUEST']._serialized_start=600
-  _globals['_GETTICKETPRICEREQUEST']._serialized_end=647
-  _globals['_GETTICKETPRICERESPONSE']._serialized_start=649
-  _globals['_GETTICKETPRICERESPONSE']._serialized_end=719
-  _globals['_CHECKRESERVATIONREQUEST']._serialized_start=721
-  _globals['_CHECKRESERVATIONREQUEST']._serialized_end=770
-  _globals['_RESERVATION']._serialized_start=773
-  _globals['_RESERVATION']._serialized_end=927
-  _globals['_CHECKRESERVATIONRESPONSE']._serialized_start=929
-  _globals['_CHECKRESERVATIONRESPONSE']._serialized_end=1046
-  _globals['_GRPCTICKETINGSERVICE']._serialized_start=1049
-  _globals['_GRPCTICKETINGSERVICE']._serialized_end=1575
+  _globals['_LISTOCCURRENCETICKETUSERSREQUEST']._serialized_start=63
+  _globals['_LISTOCCURRENCETICKETUSERSREQUEST']._serialized_end=120
+  _globals['_LISTOCCURRENCETICKETUSERSRESPONSE']._serialized_start=122
+  _globals['_LISTOCCURRENCETICKETUSERSRESPONSE']._serialized_end=175
+  _globals['_CREATEGATETICKETREQUEST']._serialized_start=177
+  _globals['_CREATEGATETICKETREQUEST']._serialized_end=282
+  _globals['_CREATEGATETICKETRESPONSE']._serialized_start=284
+  _globals['_CREATEGATETICKETRESPONSE']._serialized_end=352
+  _globals['_CANCELRESERVATIONREQUEST']._serialized_start=354
+  _globals['_CANCELRESERVATIONREQUEST']._serialized_end=404
+  _globals['_CANCELRESERVATIONRESPONSE']._serialized_start=406
+  _globals['_CANCELRESERVATIONRESPONSE']._serialized_end=463
+  _globals['_MARKRESERVATIONASPAIDREQUEST']._serialized_start=465
+  _globals['_MARKRESERVATIONASPAIDREQUEST']._serialized_end=542
+  _globals['_EXTRAORDERDTO']._serialized_start=544
+  _globals['_EXTRAORDERDTO']._serialized_end=657
+  _globals['_GETRESERVATIONEXTRAORDERSREQUEST']._serialized_start=659
+  _globals['_GETRESERVATIONEXTRAORDERSREQUEST']._serialized_end=717
+  _globals['_GETRESERVATIONEXTRAORDERSRESPONSE']._serialized_start=719
+  _globals['_GETRESERVATIONEXTRAORDERSRESPONSE']._serialized_end=826
+  _globals['_MARKRESERVATIONASPAIDRESPONSE']._serialized_start=828
+  _globals['_MARKRESERVATIONASPAIDRESPONSE']._serialized_end=889
+  _globals['_GETTICKETPRICEREQUEST']._serialized_start=891
+  _globals['_GETTICKETPRICEREQUEST']._serialized_end=938
+  _globals['_GETTICKETPRICERESPONSE']._serialized_start=940
+  _globals['_GETTICKETPRICERESPONSE']._serialized_end=1010
+  _globals['_CHECKRESERVATIONREQUEST']._serialized_start=1012
+  _globals['_CHECKRESERVATIONREQUEST']._serialized_end=1061
+  _globals['_RESERVATION']._serialized_start=1064
+  _globals['_RESERVATION']._serialized_end=1218
+  _globals['_CHECKRESERVATIONRESPONSE']._serialized_start=1220
+  _globals['_CHECKRESERVATIONRESPONSE']._serialized_end=1337
+  _globals['_GRPCTICKETINGSERVICE']._serialized_start=1340
+  _globals['_GRPCTICKETINGSERVICE']._serialized_end=2079
 # @@protoc_insertion_point(module_scope)

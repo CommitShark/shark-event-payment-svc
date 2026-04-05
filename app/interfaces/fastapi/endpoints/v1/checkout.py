@@ -75,7 +75,7 @@ async def verify_ticket_purchase(
     use_case: VerifyTicketPurchaseTransactionUseCaseDep,
     req: VerifyTicketPurchaseReqDto,
 ):
-    amount = await use_case.execute(
+    amount, __ = await use_case.execute(
         user_id=context.user_id,
         reference=req.reference,
         validate_only=True,

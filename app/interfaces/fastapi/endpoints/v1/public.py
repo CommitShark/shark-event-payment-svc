@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 from app.application.dto.checkout import (
     PublicCreateCheckoutReqDto,
     CreateCheckoutResDto,
     VerifyTicketPurchaseReqDto,
     VerifyTicketPurchaseResDto,
+    VerifyTicketPurchaseGateResDto,
+    GateCreateCheckoutReqDto,
+    GateCreateCheckoutResDto,
 )
 from app.application.dto.charge_request import (
     GetChargeResDto,
@@ -16,6 +19,7 @@ from app.interfaces.fastapi.di import (
     VerifyTicketPurchaseTransactionUseCaseDep,
     RequestChargeUseCaseDep,
 )
+from app.config import settings
 
 router = APIRouter(prefix="/v1/public", tags=["Public"])
 
@@ -40,6 +44,20 @@ async def ticket_purchase(
 
 
 @router.post(
+    "/checkout/ticket-purchase/gate",
+    response_model=GateCreateCheckoutResDto,
+    description="Generate payment link for ticket purchase at the gate",
+)
+async def ticket_purchase_gate(
+    use_case: CreateCheckoutUseCaseDep,
+    req: GateCreateCheckoutReqDto,
+):
+    return await use_case.at_gate(
+        req=req,
+    )
+
+
+@router.post(
     "/checkout/verify-ticket-purchase",
     response_model=VerifyTicketPurchaseResDto,
 )
@@ -47,14 +65,31 @@ async def verify_ticket_purchase(
     use_case: VerifyTicketPurchaseTransactionUseCaseDep,
     req: VerifyTicketPurchaseReqDto,
 ):
-    amount = await use_case.execute(
+    amount, _ = await use_case.execute(
         reference=req.reference,
-        validate_only=True,
+        validate_only=not settings.debug,
     )
 
     return VerifyTicketPurchaseResDto(
         success=True,
         amount=amount,
+    )
+
+
+@router.post(
+    "/checkout/verify-ticket-purchase/gate",
+    response_model=VerifyTicketPurchaseGateResDto,
+)
+async def verify_ticket_purchase_gate(
+    use_case: VerifyTicketPurchaseTransactionUseCaseDep,
+    req: VerifyTicketPurchaseReqDto,
+):
+    amount, qr = await use_case.validate_gate(req.reference)
+
+    return VerifyTicketPurchaseGateResDto(
+        success=True,
+        amount=amount,
+        qr=qr,
     )
 
 

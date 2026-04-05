@@ -9,6 +9,38 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class ListOccurrenceTicketUsersRequest(_message.Message):
+    __slots__ = ("occurrence_id",)
+    OCCURRENCE_ID_FIELD_NUMBER: _ClassVar[int]
+    occurrence_id: str
+    def __init__(self, occurrence_id: _Optional[str] = ...) -> None: ...
+
+class ListOccurrenceTicketUsersResponse(_message.Message):
+    __slots__ = ("user_ids",)
+    USER_IDS_FIELD_NUMBER: _ClassVar[int]
+    user_ids: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, user_ids: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class CreateGateTicketRequest(_message.Message):
+    __slots__ = ("ticket_type_id", "user_id", "occurrence_id", "amount")
+    TICKET_TYPE_ID_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    OCCURRENCE_ID_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    ticket_type_id: str
+    user_id: str
+    occurrence_id: str
+    amount: str
+    def __init__(self, ticket_type_id: _Optional[str] = ..., user_id: _Optional[str] = ..., occurrence_id: _Optional[str] = ..., amount: _Optional[str] = ...) -> None: ...
+
+class CreateGateTicketResponse(_message.Message):
+    __slots__ = ("qr", "error")
+    QR_FIELD_NUMBER: _ClassVar[int]
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    qr: str
+    error: str
+    def __init__(self, qr: _Optional[str] = ..., error: _Optional[str] = ...) -> None: ...
+
 class CancelReservationRequest(_message.Message):
     __slots__ = ("reservation_id",)
     RESERVATION_ID_FIELD_NUMBER: _ClassVar[int]

@@ -2,7 +2,7 @@ import logging
 from decimal import Decimal
 from uuid import UUID
 
-from app.domain.ports import IPaymentAdapter, IEventBus
+from app.domain.ports import IPaymentAdapter, IEventBus, ITicketService
 from app.domain.repositories import ITransactionRepository
 from app.domain.entities import Transaction
 from app.application.dto.checkout import CheckoutMetaData
@@ -20,9 +20,11 @@ class VerifyTicketPurchaseTransactionUseCase:
         self,
         payment_adapter: IPaymentAdapter,
         txn_repo: ITransactionRepository,
+        ticket_service: ITicketService,
         event_bus: IEventBus,
     ) -> None:
         self._payment_adapter = payment_adapter
+        self._ticket_service = ticket_service
         self._txn_repo = txn_repo
         self._event_bus = event_bus
 
@@ -31,7 +33,7 @@ class VerifyTicketPurchaseTransactionUseCase:
         reference: str,
         user_id: UUID | None = None,
         validate_only: bool = False,
-    ) -> Decimal:
+    ) -> tuple[Decimal, CheckoutMetaData | None]:
         # Check if transaction reference has already been recorded
         existing_txn = await self._txn_repo.get_by_reference_or_none(UUID(reference))
 
@@ -40,7 +42,7 @@ class VerifyTicketPurchaseTransactionUseCase:
                 "transaction for reference %s already exists",
                 reference,
             )
-            return existing_txn.amount
+            return existing_txn.amount, None
 
         ext_transaction = await self._payment_adapter.get_valid_transaction(reference)
 
@@ -84,7 +86,7 @@ class VerifyTicketPurchaseTransactionUseCase:
 
         if validate_only:
             print("Validation only flag is set. Skipping transaction creation.")
-            return ext_transaction.amount
+            return ext_transaction.amount, metadata
 
         charge_data: list[ChargeData] = [
             ChargeData(
@@ -128,12 +130,32 @@ class VerifyTicketPurchaseTransactionUseCase:
                     "id": metadata.ticket_charge.ticket_type_id,
                     "quantity": metadata.ticket_charge.quantity,
                 },
+                "is_gate_purchase": metadata.is_gate_purchase,
             },
         )
 
         await self._txn_repo.save(txn)
 
-        for e in txn.events:
-            await self._event_bus.publish(e)
+        if not metadata.is_gate_purchase:
+            for e in txn.events:
+                await self._event_bus.publish(e)
 
-        return ext_transaction.amount
+        return ext_transaction.amount, metadata
+
+    async def validate_gate(self, reference: str) -> tuple[Decimal, str]:
+        amount, metadata = await self.execute(
+            reference=reference,
+            validate_only=True,
+        )
+
+        if not metadata:
+            raise AppError("Metadata not found", 400)
+
+        qr = await self._ticket_service.create_gate_ticket(
+            ticket_type_id=metadata.ticket_charge.ticket_type_id,
+            user_id=metadata.ticket_charge.user,
+            occurrence_id=metadata.ticket_charge.occurrence_id,
+            amount=amount,
+        )
+
+        return amount, qr

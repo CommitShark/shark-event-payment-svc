@@ -11,6 +11,7 @@ class PaystackSettings(BaseSettings):
     url: str
     secret_key: str
     ticket_purchase_callback: str
+    gate_ticket_purchase_callback: str
     attendee_deposit_callback: str
     organizer_deposit_callback: str
 

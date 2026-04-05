@@ -9,6 +9,15 @@ class ITicketService(Protocol):
     async def get_ticket_price(self, ticket_type_id: str) -> Decimal: ...
 
     @abstractmethod
+    async def create_gate_ticket(
+        self,
+        ticket_type_id: str,
+        user_id: str,
+        occurrence_id: str,
+        amount: Decimal,
+    ) -> str: ...
+
+    @abstractmethod
     async def reservation_is_valid(
         self,
         reservation_id: str,

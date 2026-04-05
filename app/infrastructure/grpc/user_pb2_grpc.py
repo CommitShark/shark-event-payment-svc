@@ -67,6 +67,12 @@ class GrpcUserServiceStub(object):
             response_deserializer=user__pb2.GetUserDefaultTenantResponse.FromString,
             _registered_method=True,
         )
+        self.ListCardMasterUser = channel.unary_unary(
+            "/user.GrpcUserService/ListCardMasterUser",
+            request_serializer=user__pb2.ListCardMasterUserRequest.SerializeToString,
+            response_deserializer=user__pb2.ListCardMasterUserResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class GrpcUserServiceServicer(object):
@@ -102,6 +108,12 @@ class GrpcUserServiceServicer(object):
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def ListCardMasterUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_GrpcUserServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -129,6 +141,11 @@ def add_GrpcUserServiceServicer_to_server(servicer, server):
             servicer.GetUserDefaultTenant,
             request_deserializer=user__pb2.GetUserDefaultTenantRequest.FromString,
             response_serializer=user__pb2.GetUserDefaultTenantResponse.SerializeToString,
+        ),
+        "ListCardMasterUser": grpc.unary_unary_rpc_method_handler(
+            servicer.ListCardMasterUser,
+            request_deserializer=user__pb2.ListCardMasterUserRequest.FromString,
+            response_serializer=user__pb2.ListCardMasterUserResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -281,6 +298,36 @@ class GrpcUserService(object):
             "/user.GrpcUserService/GetUserDefaultTenant",
             user__pb2.GetUserDefaultTenantRequest.SerializeToString,
             user__pb2.GetUserDefaultTenantResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def ListCardMasterUser(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/user.GrpcUserService/ListCardMasterUser",
+            user__pb2.ListCardMasterUserRequest.SerializeToString,
+            user__pb2.ListCardMasterUserResponse.FromString,
             options,
             channel_credentials,
             insecure,

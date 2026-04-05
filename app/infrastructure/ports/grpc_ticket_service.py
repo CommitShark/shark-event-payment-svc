@@ -285,3 +285,55 @@ class GrpcTicketService(ITicketService):
         except Exception as e:
             # Catch any other errors
             raise AppError(f"Unexpected error: {str(e)}", 500)
+
+    async def create_gate_ticket(
+        self,
+        ticket_type_id: str,
+        user_id: str,
+        occurrence_id: str,
+        amount: Decimal,
+    ) -> str:
+        if cb.current_state == CircuitBreakerState.OPEN:
+            raise AppError(
+                "Ticket services is currently unavailable, try again later", 503
+            )
+
+        request = ticketing_pb2.CreateGateTicketRequest(
+            ticket_type_id=ticket_type_id,
+            occurrence_id=occurrence_id,
+            user_id=user_id,
+            amount=str(amount),
+        )
+
+        try:
+
+            async def grpc_call_with_timeout():
+                return await asyncio.wait_for(
+                    self._ticket_stub.CreateGateTicket(request),
+                    timeout=GRPC_DEADLINE_SECONDS,
+                )
+
+            grpc_res = await cb.call_async(grpc_call_with_timeout)
+            grpc_res = cast(ticketing_pb2.CreateGateTicketResponse, grpc_res)
+
+            if grpc_res.error.strip():
+                raise AppError(grpc_res.error, 500)
+
+            return grpc_res.qr
+        except asyncio.TimeoutError:
+            raise AppError("Request timed out", 504)
+        except RpcError as e:
+            # Map gRPC errors to appropriate HTTP status codes
+            error_map = {
+                StatusCode.UNAVAILABLE: (503, "Service unavailable"),
+                StatusCode.DEADLINE_EXCEEDED: (504, "Request deadline exceeded"),
+                StatusCode.NOT_FOUND: (404, "Ticket type not found"),
+                StatusCode.INVALID_ARGUMENT: (400, "Invalid ticket type"),
+                StatusCode.UNAUTHENTICATED: (401, "Authentication required"),
+                StatusCode.PERMISSION_DENIED: (403, "Permission denied"),
+            }
+
+            status_code, message = error_map.get(
+                e.code(), (500, f"gRPC error: {e.details()}")
+            )
+            raise AppError(message, status_code)

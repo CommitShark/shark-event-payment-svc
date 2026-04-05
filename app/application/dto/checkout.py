@@ -26,6 +26,7 @@ class CheckoutMetaData(BaseModel):
     extras_charge: CheckoutChargeMetadata | None
     signature: str
     action: str
+    is_gate_purchase: bool = False
 
 
 class DepositCheckoutMetaData(BaseModel):
@@ -55,6 +56,16 @@ class PublicCreateCheckoutReqDto(CreateCheckoutReqDto):
     user_auth_id: str
 
 
+class GateCreateCheckoutReqDto(BaseModel):
+    ticket_type_id: str
+    slug: str
+    email: str
+    occurrence_id: str
+    event_id: str
+    charge: GetChargeResDto
+    user_auth_id: str
+
+
 class CreateAttendeeCheckoutReqDto(BaseModel):
     charge_setting_id: str
     version_id: str
@@ -68,6 +79,11 @@ class CreateCheckoutResDto(BaseModel):
     link: str
 
 
+class GateCreateCheckoutResDto(CreateCheckoutResDto):
+    link: str
+    reference: str
+
+
 class VerifyTicketPurchaseReqDto(BaseModel):
     reference: str
 
@@ -79,3 +95,7 @@ class PublicVerifyTicketPurchaseReqDto(VerifyTicketPurchaseReqDto):
 class VerifyTicketPurchaseResDto(BaseModel):
     success: bool
     amount: Decimal
+
+
+class VerifyTicketPurchaseGateResDto(VerifyTicketPurchaseResDto):
+    qr: str

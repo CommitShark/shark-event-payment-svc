@@ -176,9 +176,12 @@ def get_VerifyTicketPurchaseTransactionUseCase(
     txn_repo: TxnRepoDep,
     event_bus: EventBusDep,
 ):
+    ticket_stub = grpc_client.get_ticket_grpc_stub()
+
     return VerifyTicketPurchaseTransactionUseCase(
         payment_adapter,
         txn_repo,
+        GrpcTicketService(ticket_stub),
         event_bus,
     )
 

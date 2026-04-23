@@ -30,6 +30,7 @@ async def get_ticket_type_charge(
         extras=req.extras,
         occurrence_id=req.occurrence_id,
         event_id=req.event_id,
+        pay_more_amount=req.pay_more_amount,
     )
 
     return GetChargeResDto(

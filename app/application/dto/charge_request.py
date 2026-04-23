@@ -10,6 +10,7 @@ class GetChargeReqDto(BaseModel):
     event_id: str
     occurrence_id: str
     quantity: int
+    pay_more_amount: Decimal | None = None
     extras: list[ExtraOrderIntent] | None = None
 
 
@@ -25,6 +26,7 @@ class ChargeDto(BaseModel):
     calculated_charge: str | None = None
     percentage_rate: str | None = None
     signature: str | None = None
+    pay_more_amount: Decimal | None = None
     charge_group: str | None = None
 
 

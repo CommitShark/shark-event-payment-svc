@@ -129,6 +129,7 @@ class VerifyTicketPurchaseTransactionUseCase:
                 "ticket": {
                     "id": metadata.ticket_charge.ticket_type_id,
                     "quantity": metadata.ticket_charge.quantity,
+                    "pay_more_amount": metadata.ticket_charge.pay_more_amount,
                 },
                 "is_gate_purchase": metadata.is_gate_purchase,
             },

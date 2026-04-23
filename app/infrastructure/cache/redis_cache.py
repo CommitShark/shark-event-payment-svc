@@ -18,6 +18,7 @@ class RedisCacheService(ICacheService):
         db: int = 0,
         prefix: str = "eventor:payment-svc:",
         pool_size: int = 20,
+        password: str | None = None,
     ):
         # Lazy Redis client (connection occurs only when first used)
         self._redis = Redis(
@@ -135,5 +136,6 @@ def get_RedisCacheService():
             db=redis_config.db,
             host=redis_config.host,
             port=redis_config.port,
+            password=redis_config.password,
         )
     return _service

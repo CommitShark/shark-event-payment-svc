@@ -9,6 +9,20 @@ service GrpcUserService {
   rpc GetUserContactInfo(GetUserContactInfoRequest) returns (GetUserContactInfoResponse);
   rpc GetUserDefaultTenant(GetUserDefaultTenantRequest) returns (GetUserDefaultTenantResponse);
   rpc ListCardMasterUser(ListCardMasterUserRequest) returns (ListCardMasterUserResponse);
+  rpc ResolveUser(ResolveUserRequest) returns (ResolveUserResponse);
+}
+
+message ResolveUserRequest {
+  string email = 1;
+  string first_name = 2;
+  string last_name = 3;
+}
+
+message ResolveUserResponse {
+  string id = 1;
+  string email = 2;
+  optional string username = 3;
+  optional string avatar = 4;
 }
 
 message CardMasterUser {

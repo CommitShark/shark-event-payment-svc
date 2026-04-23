@@ -60,6 +60,10 @@ class SettleTicketPurchaseUseCase:
 
         ticket_meta = txn.metadata.get("ticket", None) if txn.metadata else None
         ticket_quantity = int(ticket_meta.get("quantity", 1)) if ticket_meta else 1
+        support_amount_raw = (
+            ticket_meta.get("support", "0") or "0" if ticket_meta else "0"
+        )
+        support_amount = Decimal(support_amount_raw)
 
         print(f"Transaction {txn.reference}: Get organizer with slug: {str(event)}")
         organizer = await self._user_service.get_event_organizer(
@@ -108,10 +112,12 @@ class SettleTicketPurchaseUseCase:
         else:
             ticket_amount = ticket_amount - ticket_fee
 
+        cost_per_ticket = (ticket_amount + ticket_fee) / ticket_quantity
+
         print(f"Transaction {txn.reference}: Mark reservation as paid")
         await self._ticket_service.mark_reservation_as_paid(
             str(txn.reference),
-            (ticket_amount + ticket_fee) / ticket_quantity,
+            cost_per_ticket,
         )
         print(
             f"Transaction {txn.reference}: Marked reservation as paid. Found {len(orders)} extra orders"

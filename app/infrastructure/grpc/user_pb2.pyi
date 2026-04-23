@@ -6,6 +6,28 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class ResolveUserRequest(_message.Message):
+    __slots__ = ("email", "first_name", "last_name")
+    EMAIL_FIELD_NUMBER: _ClassVar[int]
+    FIRST_NAME_FIELD_NUMBER: _ClassVar[int]
+    LAST_NAME_FIELD_NUMBER: _ClassVar[int]
+    email: str
+    first_name: str
+    last_name: str
+    def __init__(self, email: _Optional[str] = ..., first_name: _Optional[str] = ..., last_name: _Optional[str] = ...) -> None: ...
+
+class ResolveUserResponse(_message.Message):
+    __slots__ = ("id", "email", "username", "avatar")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    EMAIL_FIELD_NUMBER: _ClassVar[int]
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    AVATAR_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    email: str
+    username: str
+    avatar: str
+    def __init__(self, id: _Optional[str] = ..., email: _Optional[str] = ..., username: _Optional[str] = ..., avatar: _Optional[str] = ...) -> None: ...
+
 class CardMasterUser(_message.Message):
     __slots__ = ("id", "email", "first_name", "last_name", "created_at", "avatar", "preferred_name", "tenants")
     ID_FIELD_NUMBER: _ClassVar[int]

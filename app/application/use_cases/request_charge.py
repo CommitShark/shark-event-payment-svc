@@ -46,6 +46,7 @@ class RequestChargeUseCase:
         ticket_type_id: str,
         event_id: str,
         quantity: int,
+        pay_more_amount: Optional[Decimal],
         extras: Optional[list[ExtraOrderIntent]] = None,
     ):
         """
@@ -54,6 +55,15 @@ class RequestChargeUseCase:
         """
 
         ticket_base_price = await self._ticket_service.get_ticket_price(ticket_type_id)
+
+        if pay_more_amount and pay_more_amount < ticket_base_price:
+            raise AppError(
+                message=f"Minimum amount is {ticket_base_price}", status_code=400
+            )
+
+        if pay_more_amount:
+            ticket_base_price = pay_more_amount
+
         ticket_subtotal = ticket_base_price * Decimal(quantity)
 
         # Get charge setting for ticket purchases
@@ -88,6 +98,7 @@ class RequestChargeUseCase:
                 "ticket_type": ticket_type_id,
                 "event_id": event_id,
                 "occurrence_id": occurrence_id,
+                "pay_more_amount": (str(pay_more_amount) if pay_more_amount else None),
                 "charge_group": "tickets",
             }
         )
@@ -160,6 +171,7 @@ class RequestChargeUseCase:
                     "user": user_id,
                     "event_id": event_id,
                     "occurrence_id": occurrence_id,
+                    "pay_more_amount": None,
                     "charge_group": "extras",
                 }
             )

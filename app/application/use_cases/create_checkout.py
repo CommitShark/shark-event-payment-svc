@@ -59,6 +59,11 @@ class CreateCheckoutUseCase:
             "quantity": quantity,
             "event_id": event_id,
             "occurrence_id": occurrence_id,
+            "pay_more_amount": (
+                str(ticket_charge.pay_more_amount)
+                if ticket_charge.pay_more_amount
+                else None
+            ),
             "charge_group": "tickets",
         }
 
@@ -76,6 +81,7 @@ class CreateCheckoutUseCase:
                 "event_id": event_id,
                 "occurrence_id": occurrence_id,
                 "charge_group": "extras",
+                "pay_more_amount": None,
             }
             charges_data.append(charges_data_payload)
 

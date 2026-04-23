@@ -19,6 +19,7 @@ class CheckoutChargeMetadata(BaseModel):
 class TicketCheckoutChargeMetadata(CheckoutChargeMetadata):
     ticket_type_id: str
     quantity: int
+    pay_more_amount: str | None = None
 
 
 class CheckoutMetaData(BaseModel):

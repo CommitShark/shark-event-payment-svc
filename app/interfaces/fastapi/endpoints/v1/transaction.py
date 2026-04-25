@@ -69,6 +69,8 @@ async def verify_transaction(
         and transaction.settlement_status == "pending"
     ):
         await event_bus.publish(TransactionCreatedEvent.create(transaction))
+    else:
+        print(f"settle-ticket-purchase: Invalid Transaction")
     return BaseResponseDTO(success=True)
 
 

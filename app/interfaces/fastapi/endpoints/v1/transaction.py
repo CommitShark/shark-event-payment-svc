@@ -6,6 +6,7 @@ from app.application.dto.base import (
     PaginatedReqDto,
     BaseResponseDTO,
 )
+from app.domain.events import TransactionCreatedEvent
 from app.application.dto.transaction import (
     TransactionListDto,
     TransactionDetailsDto,
@@ -14,7 +15,11 @@ from app.application.dto.transaction import (
 from app.application.dto import wallet
 
 from app.interfaces.fastapi.context import AdminUserContextDep
-from app.interfaces.fastapi.di import TxnRepoDep, UpdateTransactionStatusUseCaseDep
+from app.interfaces.fastapi.di import (
+    TxnRepoDep,
+    UpdateTransactionStatusUseCaseDep,
+    EventBusDep,
+)
 
 from app.domain.entities.value_objects import (
     TransactionSettlementStatus,
@@ -44,6 +49,26 @@ async def update_transaction_status(
         )
     )
 
+    return BaseResponseDTO(success=True)
+
+
+@router.post(
+    "/admin/{transaction_id}/settle-ticket-purchase",
+    response_model=BaseResponseDTO,
+)
+async def verify_transaction(
+    _: AdminUserContextDep,
+    transaction_id: UUID,
+    repo: TxnRepoDep,
+    event_bus: EventBusDep,
+):
+    transaction = await repo.get_by_id(transaction_id)
+    if (
+        transaction.transaction_type == "purchase"
+        and transaction.resource == "ticket"
+        and transaction.settlement_status == "pending"
+    ):
+        await event_bus.publish(TransactionCreatedEvent.create(transaction))
     return BaseResponseDTO(success=True)
 
 

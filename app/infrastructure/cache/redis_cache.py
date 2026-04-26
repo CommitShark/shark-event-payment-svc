@@ -31,7 +31,7 @@ class RedisCacheService(ICacheService):
         self.prefix = prefix
 
     async def dispose(self):
-        await self._redis.shutdown(save=True)
+        await self._redis.aclose()
 
     # -------------------------
     # Internal helpers
